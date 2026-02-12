@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build: .
+    container_name: dashboard_front
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+    networks:
+      - shared_net
+
+networks:
+  shared_net:
+    external: true
+    name: 360_shared_network
