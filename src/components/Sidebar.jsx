@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Cookies from 'js-cookie';
 import api from '@/lib/api';
@@ -11,7 +12,7 @@ import {
     ListItemText, Typography, Avatar, Divider, IconButton
 } from '@mui/material';
 
-// MUI Icons (Versión Outlined para mayor sobriedad)
+// MUI Icons
 import DashboardIcon from '@mui/icons-material/GridViewOutlined';
 import DnsIcon from '@mui/icons-material/DnsOutlined';
 import BookIcon from '@mui/icons-material/AutoStoriesOutlined';
@@ -33,10 +34,25 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
+    // 1. Estados para hidratación y datos
+    const [mounted, setMounted] = useState(false);
+    const [userData, setUserData] = useState(null);
+
     const router = useRouter();
     const pathname = usePathname();
-    const rawData = Cookies.get('user_data');
-    const userData = rawData ? JSON.parse(rawData) : null;
+
+    // 2. Efecto para inicializar el componente solo en el cliente
+    useEffect(() => {
+        setMounted(true);
+        const rawData = Cookies.get('user_data');
+        if (rawData) {
+            try {
+                setUserData(JSON.parse(rawData));
+            } catch (error) {
+                console.error("Error al parsear user_data:", error);
+            }
+        }
+    }, []);
 
     const logout = async () => {
         const loadingToast = toast.loading('Cerrando sesión...');
@@ -46,9 +62,17 @@ export default function Sidebar() {
         } catch (error) {
             toast.error('Error al cerrar sesión', { id: loadingToast });
         } finally {
+            // Limpieza completa de cookies
             Cookies.remove('auth_token');
+            Cookies.remove('user_data');
             router.push('/login');
         }
+    };
+
+    // Función para obtener iniciales del nombre
+    const getInitials = (name) => {
+        if (!name) return "??";
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     };
 
     return (
@@ -114,7 +138,7 @@ export default function Sidebar() {
 
             <Divider sx={{ mx: 2, opacity: 0.6 }} />
 
-            {/* Perfil Inferior Sobrio */}
+            {/* Perfil Inferior */}
             <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Avatar sx={{
                     width: 36,
@@ -124,8 +148,9 @@ export default function Sidebar() {
                     color: 'text.primary',
                     border: '1px solid #e2e8f0'
                 }}>
-                    AL
+                    {mounted && userData ? getInitials(userData.name) : '--'}
                 </Avatar>
+
                 <Box sx={{ flexGrow: 1 }}>
                     {mounted && userData ? (
                         <>
@@ -142,6 +167,7 @@ export default function Sidebar() {
                         </Typography>
                     )}
                 </Box>
+
                 <IconButton onClick={logout} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
                     <LogoutIcon fontSize="small" />
                 </IconButton>
