@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '@/lib/api';
+import DeviceModal from '@/components/DeviceModal';
 import {
     Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Paper, Tabs, Tab, Typography, Chip, CircularProgress, Stack, TextField,
@@ -13,12 +14,19 @@ import {
 
 export default function InfraestructuraGestion() {
     const [allDevices, setAllDevices] = useState([]);
-    const [options, setOptions] = useState({ statuses: [], locations: [] });
+    const [options, setOptions] = useState({
+        statuses: [],
+        locations: [],
+        deviceTypes: [],
+        serverTypes: [],
+        networkTypes: []
+    });
     const [loading, setLoading] = useState(true);
     const [tabIndex, setTabIndex] = useState(0);
     const [search, setSearch] = useState('');
     const [filterLocation, setFilterLocation] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [openModal, setOpenModal] = useState(false);
 
     const tabMapping = ['server', 'nas', 'dispositivo_red'];
 
@@ -29,25 +37,45 @@ export default function InfraestructuraGestion() {
                     api.get('/infrastructure'),
                     api.get('/options')
                 ]);
+
                 setAllDevices(infraRes.data);
+
+                // Agrupar opciones por 'type' según tu tabla option_lists
                 const groupedOptions = (optionsRes.data || []).reduce((acc, item) => {
                     const group = item.type;
                     if (!acc[group]) acc[group] = [];
                     acc[group].push(item);
                     return acc;
                 }, {});
+
                 setOptions({
                     statuses: groupedOptions.status_type || [],
                     locations: groupedOptions.location || [],
+                    deviceTypes: groupedOptions.device_type || [],
+                    serverTypes: groupedOptions.server_type || [],
+                    networkTypes: groupedOptions.network_type || [],
                 });
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Error al cargar datos:", error);
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
     }, []);
+
+    // Función para guardar el dispositivo
+    const handleSaveDevice = async (formData) => {
+        try {
+            const response = await api.post('/infrastructure', formData);
+            // Actualizamos la lista local agregando el nuevo dispositivo al inicio
+            setAllDevices(prev => [response.data, ...prev]);
+            setOpenModal(false);
+        } catch (error) {
+            console.error("Error al guardar:", error);
+            alert("Error al guardar el dispositivo. Revisa la consola.");
+        }
+    };
 
     const counts = useMemo(() => ({
         server: allDevices.filter(d => d.device_type?.slug === 'server').length,
@@ -71,17 +99,22 @@ export default function InfraestructuraGestion() {
 
     return (
         <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
-            {/* ... Encabezado y Tarjetas (Mantener igual) ... */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box>
                     <Typography variant="h4" fontWeight="bold" color="#1e293b">Infraestructura</Typography>
                     <Typography color="text.secondary">Gestión de activos tecnológicos</Typography>
                 </Box>
-                <Button variant="contained" startIcon={<Add />} sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}>
+                <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => setOpenModal(true)}
+                    sx={{ borderRadius: 2, textTransform: 'none', px: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                >
                     Agregar Dispositivo
                 </Button>
             </Box>
 
+            {/* Tarjetas de Resumen */}
             <Grid container spacing={3} mb={4}>
                 {[
                     { label: 'Servidores', count: counts.server, icon: <DnsOutlined color="primary" />, color: '#e0f2fe' },
@@ -93,7 +126,10 @@ export default function InfraestructuraGestion() {
                         <Card variant="outlined" sx={{ borderRadius: 3, border: '1px solid #e2e8f0' }}>
                             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Box sx={{ p: 1.5, bgcolor: card.color, borderRadius: 2, display: 'flex' }}>{card.icon}</Box>
-                                <Box><Typography variant="h5" fontWeight="bold">{card.count}</Typography><Typography variant="body2" color="text.secondary">{card.label}</Typography></Box>
+                                <Box>
+                                    <Typography variant="h5" fontWeight="bold">{card.count}</Typography>
+                                    <Typography variant="body2" color="text.secondary">{card.label}</Typography>
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>
@@ -102,7 +138,14 @@ export default function InfraestructuraGestion() {
 
             {/* Filtros */}
             <Paper sx={{ p: 2, mb: 3, borderRadius: 3, display: 'flex', gap: 2, alignItems: 'center', boxShadow: 'none', border: '1px solid #e2e8f0' }}>
-                <TextField fullWidth size="small" placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} />
+                <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Buscar por nombre o IP..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
+                />
                 <TextField select size="small" value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} sx={{ minWidth: 200 }}>
                     <MenuItem value="all">Todas las ubicaciones</MenuItem>
                     {options.locations.map((loc) => <MenuItem key={loc.id} value={loc.id}>{loc.name}</MenuItem>)}
@@ -119,29 +162,18 @@ export default function InfraestructuraGestion() {
                 <Tab label={`Red (${counts.red})`} />
             </Tabs>
 
-            {/* TABLA CON LÓGICA DIFERENCIADA REINTEGRADA */}
+            {/* Tabla */}
             <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
                 <Table>
                     <TableHead sx={{ bgcolor: '#f1f5f9' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }}>
-                                {tabIndex === 1 ? 'NAS' : tabIndex === 2 ? 'Dispositivo' : 'Servidor'}
-                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>{tabIndex === 1 ? 'NAS' : tabIndex === 2 ? 'Dispositivo' : 'Servidor'}</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>
-                                {tabIndex === 0 ? 'Especificaciones' : tabIndex === 1 ? 'Capacidad' : 'Marca / Modelo'}
-                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>{tabIndex === 0 ? 'Especificaciones' : tabIndex === 1 ? 'Capacidad' : 'Marca / Modelo'}</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>IP</TableCell>
-
-                            {/* Columna de Ubicación (Servidores y Red) o Carpetas (NAS) */}
-                            <TableCell sx={{ fontWeight: 'bold' }}>
-                                {tabIndex === 1 ? 'Carpetas' : 'Ubicación'}
-                            </TableCell>
-
-                            {/* Columnas condicionales que SIEMPRE deben existir en el Head si se usan en el Body */}
+                            <TableCell sx={{ fontWeight: 'bold' }}>{tabIndex === 1 ? 'Carpetas' : 'Ubicación'}</TableCell>
                             {tabIndex === 2 && <TableCell sx={{ fontWeight: 'bold' }}>Último Mant.</TableCell>}
                             {tabIndex === 1 && <TableCell sx={{ fontWeight: 'bold' }}>RAID</TableCell>}
-
                             <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
                         </TableRow>
                     </TableHead>
@@ -152,18 +184,9 @@ export default function InfraestructuraGestion() {
                                     <Typography variant="subtitle2" fontWeight="bold">{device.name}</Typography>
                                     <Typography variant="caption" color="text.disabled">{device.description}</Typography>
                                 </TableCell>
-
                                 <TableCell>
-                                    {tabIndex === 1 ? (
-                                        <Box>
-                                            <Typography variant="body2">{device.brand}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{device.model}</Typography>
-                                        </Box>
-                                    ) : (
-                                        <Chip label={device.sub_type?.name || 'N/A'} size="small" variant="outlined" />
-                                    )}
+                                    <Chip label={device.sub_type?.name || 'N/A'} size="small" variant="outlined" />
                                 </TableCell>
-
                                 <TableCell>
                                     {tabIndex === 0 ? (
                                         <Stack spacing={0.5}>
@@ -179,37 +202,19 @@ export default function InfraestructuraGestion() {
                                         </Box>
                                     )}
                                 </TableCell>
-
                                 <TableCell>
                                     <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: '#f1f5f9', px: 1, borderRadius: 1, display: 'inline-block' }}>
                                         {device.ip_address || '-'}
                                     </Typography>
                                 </TableCell>
-
                                 <TableCell>
-                                    {tabIndex === 1 ? (
-                                        <Typography variant="body2">{device.folders_count || 0} ítems</Typography>
-                                    ) : (
-                                        <Typography variant="body2">{device.location?.name || 'No asignada'}</Typography>
-                                    )}
+                                    {tabIndex === 1 ? (device.folders_count || 0) : (device.location?.name || 'No asignada')}
                                 </TableCell>
-
-                                {/* IMPORTANTE: Mantener el orden de las celdas igual al del Header */}
-                                {tabIndex === 2 && (
-                                    <TableCell>
-                                        <Typography variant="body2">{device.last_maintenance || 'N/A'}</Typography>
-                                    </TableCell>
-                                )}
-
-                                {tabIndex === 1 && (
-                                    <TableCell>
-                                        <Chip label={device.raid_type || 'N/A'} size="small" sx={{ fontWeight: 'bold' }} />
-                                    </TableCell>
-                                )}
-
+                                {tabIndex === 2 && <TableCell>{device.last_maintenance || 'N/A'}</TableCell>}
+                                {tabIndex === 1 && <TableCell><Chip label={device.raid_type || 'N/A'} size="small" /></TableCell>}
                                 <TableCell>
                                     <Chip
-                                        label={device.status?.name || 'N/A'}
+                                        label={device.status?.name}
                                         color={device.status?.slug === 'activo' ? 'success' : 'default'}
                                         size="small"
                                     />
@@ -219,6 +224,14 @@ export default function InfraestructuraGestion() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Modal de Agregar Dispositivo */}
+            <DeviceModal
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                onSave={handleSaveDevice}
+                options={options}
+            />
         </Box>
     );
 }
