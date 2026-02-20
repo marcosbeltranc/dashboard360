@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Cookies from 'js-cookie';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 
 // MUI Components
 import {
@@ -84,20 +85,16 @@ export default function Sidebar() {
             flexDirection: 'column',
             borderRight: '1px solid #e2e8f0'
         }}>
-            {/* Header Limpio */}
-            <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    p: 0.8,
-                    borderRadius: 1,
-                    display: 'flex'
-                }}>
-                    <SecurityIcon fontSize="small" />
-                </Box>
-                <Typography variant="h6" fontWeight="700" color="text.primary" sx={{ letterSpacing: '-0.5px' }}>
-                    MB-360
-                </Typography>
+            <Box sx={{ p: 3.5, pb: 0 }}>
+                <div className="relative w-[120px] h-[60px]">
+                    <Image
+                        src="/logo_c.svg"
+                        alt="Logo GAIA"
+                        fill
+                        className="object-contain object-left"
+                        priority
+                    />
+                </div>
             </Box>
 
             {/* Navegación */}
