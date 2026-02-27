@@ -7,7 +7,7 @@ import { Box, CircularProgress } from '@mui/material';
 
 export default function NewServerPage() {
     const router = useRouter();
-    const [options, setOptions] = useState({ statuses: [], locations: [], serverTypes: [], responsibles: [] });
+    const [options, setOptions] = useState({ statuses: [], locations: [], serverTypes: [], responsibles: [], serverAccess: [], serverUsers: [] });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -24,7 +24,9 @@ export default function NewServerPage() {
                     statuses: grouped.status_type || [],
                     locations: grouped.location || [],
                     serverTypes: grouped.server_type || [],
-                    responsibles: respRes.data.data || respRes.data || []
+                    responsibles: respRes.data.data || respRes.data || [],
+                    serverAccess: grouped.server_access || [],
+                    serverUsers: grouped.server_user || [],
                 });
             } catch (e) { console.error(e); } finally { setLoading(false); }
         };
@@ -34,7 +36,7 @@ export default function NewServerPage() {
     const handleCreate = async (formData) => {
         try {
             await api.post('/server-devices', { ...formData, device_type_id: 6 });
-            router.push('/infrastructure/servers');
+            router.push('/infraestructura');
         } catch (e) { alert("Error al crear"); }
     };
 

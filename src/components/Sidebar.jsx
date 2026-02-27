@@ -7,14 +7,13 @@ import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 
-// MUI Components
 import {
     Box, List, ListItem, ListItemButton, ListItemIcon,
     ListItemText, Typography, Avatar, Divider, IconButton
 } from '@mui/material';
 
-// MUI Icons
 import DashboardIcon from '@mui/icons-material/GridViewOutlined';
+import AdminIcon from '@mui/icons-material/SettingsOutlined';
 import DnsIcon from '@mui/icons-material/DnsOutlined';
 import BookIcon from '@mui/icons-material/AutoStoriesOutlined';
 import RouterIcon from '@mui/icons-material/RouterOutlined';
@@ -22,10 +21,10 @@ import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import ShieldIcon from '@mui/icons-material/ShieldOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
-import SecurityIcon from '@mui/icons-material/SecurityOutlined';
 
 const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon fontSize="small" />, path: '/home' },
+    { text: 'Administracion', icon: <AdminIcon fontSize='small' />, path: '/administracion' },
     { text: 'Sistemas', icon: <DnsIcon fontSize="small" />, path: '/sistemas' },
     { text: 'Base de Conocimientos', icon: <BookIcon fontSize="small" />, path: '/conocimiento' },
     { text: 'Infraestructura', icon: <RouterIcon fontSize="small" />, path: '/infraestructura' },
@@ -35,14 +34,12 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
-    // 1. Estados para hidratación y datos
     const [mounted, setMounted] = useState(false);
     const [userData, setUserData] = useState(null);
 
     const router = useRouter();
     const pathname = usePathname();
 
-    // 2. Efecto para inicializar el componente solo en el cliente
     useEffect(() => {
         setMounted(true);
         const rawData = Cookies.get('user_data');
@@ -63,14 +60,13 @@ export default function Sidebar() {
         } catch (error) {
             toast.error('Error al cerrar sesión', { id: loadingToast });
         } finally {
-            // Limpieza completa de cookies
             Cookies.remove('auth_token');
             Cookies.remove('user_data');
             router.push('/login');
         }
     };
 
-    // Función para obtener iniciales del nombre
+
     const getInitials = (name) => {
         if (!name) return "??";
         return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
