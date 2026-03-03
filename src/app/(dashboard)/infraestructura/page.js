@@ -116,7 +116,6 @@ export default function InfraestructuraGestion() {
         setSelectedDevice(device);
         setOpenNetworkModal(true);
     };
-
     const counts = useMemo(() => ({
         server: devices.servers.length,
         nas: devices.nas.length,

@@ -499,7 +499,6 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             label="Estado del Equipo"
                             sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         >
-                            {/* Usamos 'statuses' porque es la llave que definiste en el grouped de tu page.js */}
                             {options?.statuses?.map(opt => (
                                 <MenuItem key={opt.id} value={opt.id}>
                                     {opt.name}
@@ -578,7 +577,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                     <Tab icon={<Settings fontSize="small" />} iconPosition="start" label="Especificaciones" />
                     <Tab icon={<Lock fontSize="small" />} iconPosition="start" label="Accesos" />
                     <Tab icon={<Person fontSize="small" />} iconPosition="start" label="Usuarios Windows" />
-                    <Tab icon={<Dns fontSize="small" />} iconPosition="start" label="Sistemas (2)" />
+                    <Tab icon={<Dns fontSize="small" />} iconPosition="start" label="Sistemas" />
                 </Tabs>
             </Box>
 
