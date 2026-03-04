@@ -16,6 +16,7 @@ import {
     IconButton
 } from "@mui/material";
 import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
+import Image from 'next/image';
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({ email: "", password: "" });
@@ -55,13 +56,14 @@ export default function LoginPage() {
             <Container maxWidth="xs">
                 <Card elevation={10} sx={{ borderRadius: 4, overflow: 'visible' }}>
                     <CardContent className="p-8">
-                        <Typography variant="h4" fontWeight="800" textAlign="center" gutterBottom color="primary.main">
-                            MB-360
-                        </Typography>
-                        <Typography variant="body2" textAlign="center" color="text.secondary" mb={4}>
-                            Identifícate para continuar
-                        </Typography>
-
+                        <Image
+                            src="/logo_c.svg"
+                            alt="Logo"
+                            width={150}
+                            height={50}
+                            className="mx-auto mb-4"
+                            priority
+                        />
                         <form onSubmit={handleSubmit}>
                             <TextField
                                 fullWidth

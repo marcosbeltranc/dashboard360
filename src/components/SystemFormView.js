@@ -135,7 +135,7 @@ export default function SystemFormView({
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <Card variant="outlined" sx={{ borderRadius: 3 }}><CardContent>
-                        <DataField label="Última Actualización" name="updated_at" value={formData.updated_at} icon={Update} />
+                        <DataField label="Última Actualización" name="last_update" value={formData.last_update} icon={Update} />
                     </CardContent></Card>
                 </Grid>
             </Grid>
