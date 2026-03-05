@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Box, Grid, Typography, Card, CardContent, TextField, Button,
-    Chip, Divider, Stack, IconButton, MenuItem, Paper, Avatar
+    Chip, Divider, Stack, IconButton, MenuItem, Paper, Avatar, Autocomplete
 } from '@mui/material';
 import {
     Edit, Save, Dns, Person, Settings, ArrowBack,
@@ -24,7 +24,12 @@ export default function SystemFormView({
     const [formData, setFormData] = useState(initialData || {});
 
     useEffect(() => {
-        if (initialData) setFormData(initialData);
+        if (initialData) {
+            setFormData({
+                ...initialData,
+                areas: initialData.areas?.map(a => a.id) || []
+            });
+        }
     }, [initialData]);
 
     const handleChange = (e) => {
@@ -41,12 +46,15 @@ export default function SystemFormView({
         if (mode === 'create') {
             router.back();
         } else {
-            setFormData(initialData);
+            setFormData({
+                ...initialData,
+                areas: initialData.areas?.map(a => a.id) || []
+            });
             setIsEditing(false);
         }
     };
-
-    const DataField = ({ label, name, value, icon: IconComponent, select = false, optionsArray = [], multiline = false, rows = 1, type = 'text' }) => (
+    const DataField = ({ label, name, value, icon: IconComponent, select = false, optionsArray = [], multiline = false, rows = 1, type = 'text', multiple = false }) => (
+        // const DataField = ({ label, name, value, icon: IconComponent, select = false, optionsArray = [], multiline = false, rows = 1, type = 'text' }) => (
         <Box sx={{ mb: 2, display: 'flex', alignItems: isEditing ? 'flex-start' : 'center', gap: 2 }}>
             {!isEditing && IconComponent && (
                 <Avatar variant="rounded" sx={{ bgcolor: 'rgba(37, 99, 235, 0.08)', color: 'primary.main', width: 42, height: 42 }}>
@@ -61,11 +69,19 @@ export default function SystemFormView({
 
                 {isEditing ? (
                     <TextField
-                        fullWidth size="small" name={name} value={value || ''}
-                        onChange={handleChange} select={select} type={type}
-                        variant="outlined" multiline={multiline} rows={rows}
+                        fullWidth size="small"
+                        name={name}
+                        value={multiple ? (value || []) : (value || '')}
+                        onChange={handleChange}
+                        select={select}
+                        type={type}
+                        variant="outlined"
+                        multiline={multiline}
+                        rows={rows}
                         sx={{ bgcolor: '#fff' }}
-                        InputLabelProps={{ shrink: true }}
+                        SelectProps={{
+                            multiple
+                        }}
                     >
                         {optionsArray.map(opt => (
                             <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
@@ -74,7 +90,12 @@ export default function SystemFormView({
                 ) : (
                     <Typography variant="body1" fontWeight="600" color="#1e293b" sx={{ minHeight: '24px', lineHeight: 1.2 }}>
                         {select
-                            ? (optionsArray?.find(opt => opt.id === value)?.name || 'No asignado')
+                            ? multiple
+                                ? optionsArray
+                                    ?.filter(opt => value?.includes(opt.id))
+                                    .map(opt => opt.name)
+                                    .join(', ')
+                                : (optionsArray?.find(opt => opt.id === value)?.name || 'No asignado')
                             : (value || '—')
                         }
                     </Typography>
@@ -83,6 +104,8 @@ export default function SystemFormView({
         </Box>
     );
 
+    console.log(options?.priorities);
+    const status = options?.statuses?.find(s => s.id === formData.status_id);
     return (
         <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
             {/* HEADER */}
@@ -92,73 +115,234 @@ export default function SystemFormView({
                         <ArrowBack fontSize="small" />
                     </IconButton>
                     <Box>
+                        <Stack direction="row" spacing={2} alignItems="center" mb={1}>
+
+                            {isEditing ? (
+                                <TextField
+                                    name="name"
+                                    value={formData.name || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nombre del Sistema"
+                                    variant="standard"
+                                    fullWidth
+                                    InputProps={{ style: { fontSize: '1.5rem', fontWeight: 'bold' } }}
+                                />
+                            ) : (
+                                <Typography variant="h4" fontWeight="bold" color="#1e293b">
+                                    {formData.name || 'Sin Nombre'}
+                                </Typography>
+                            )}
+
+                            {isEditing ? (
+                                <Box sx={{ minWidth: 200 }}>
+                                    <TextField
+                                        select
+                                        size="small"
+                                        name="status_id"
+                                        value={formData.status_id || ''}
+                                        onChange={handleChange}
+                                        label="Estado"
+                                        sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 }, minWidth: 100 }}
+                                    >
+                                        {options?.statuses?.map(opt => (
+                                            <MenuItem key={opt.id} value={opt.id}>
+                                                {opt.name}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                </Box>
+                            ) : (
+                                <Chip
+                                    label={status?.name || 'Sin estado'}
+                                    size="small"
+                                    sx={{
+                                        bgcolor: `${status?.color}20`,
+                                        color: status?.color || '#64748b',
+                                        fontWeight: 'bold',
+                                        borderRadius: 1.5
+                                    }}
+                                />
+                            )}
+
+                        </Stack>
+
                         {isEditing ? (
                             <TextField
-                                name="name" value={formData.name || ''} onChange={handleChange}
-                                placeholder="Nombre del Sistema" variant="standard" fullWidth
-                                InputProps={{ style: { fontSize: '1.5rem', fontWeight: 'bold' } }}
+                                name="description" value={formData.description || ''} onChange={handleChange}
+                                placeholder="Descripcion del Sistema" variant="standard"
+                                size="small"
+                                InputProps={{
+                                    style: { fontSize: '0.875rem', color: '#64748b' },
+                                    disableUnderline: true,
+                                }}
                             />
                         ) : (
-                            <Typography variant="h4" fontWeight="bold" color="#1e293b">{formData.name || 'Sin Nombre'}</Typography>
+                            <Typography color="text.secondary">{formData.description || 'Detalle del sistema'}</Typography>
                         )}
-                        <Typography color="text.secondary">{formData.description || 'Detalle del sistema'}</Typography>
+
+
                     </Box>
                 </Box>
                 <Stack direction="row" spacing={2}>
                     {!isEditing ? (
-                        <Button variant="contained" startIcon={<Edit />} onClick={() => setIsEditing(true)}>Editar</Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<Edit />}
+                            onClick={() => setIsEditing(true)}
+                            sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                        >Editar</Button>
                     ) : (
                         <>
-                            <Button onClick={handleCancel}>Cancelar</Button>
-                            <Button variant="contained" startIcon={<Save />} onClick={handleSave}>Guardar</Button>
+                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#fff' }}>
+                                Cancelar
+                            </Button>
+                            <Button variant="contained" startIcon={<Save />} onClick={handleSave} sx={{ borderRadius: 2, textTransform: 'none', px: 3 }} >Guardar</Button>
                         </>
                     )}
                 </Stack>
             </Box>
 
-            {/* FILA 1: KPI CARDS (4 VALORES) */}
-            <Grid container spacing={3} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card variant="outlined" sx={{ borderRadius: 3 }}><CardContent>
-                        <DataField label="Servidor" name="server_device_id" value={formData.server_device_id} select icon={Dns} optionsArray={servers} />
-                    </CardContent></Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card variant="outlined" sx={{ borderRadius: 3 }}><CardContent>
-                        <DataField label="Criticidad" name="priority_id" value={formData.priority_id} select icon={Settings} optionsArray={options?.priorities} />
-                    </CardContent></Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card variant="outlined" sx={{ borderRadius: 3 }}><CardContent>
-                        <DataField label="Responsable" name="responsible_id" value={formData.responsible_id} select icon={Person} optionsArray={users} />
-                    </CardContent></Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card variant="outlined" sx={{ borderRadius: 3 }}><CardContent>
-                        <DataField label="Última Actualización" name="last_update" value={formData.last_update} icon={Update} />
-                    </CardContent></Card>
-                </Grid>
-            </Grid>
+            <Stack
+                direction="row"
+                spacing={3}
+                mb={4}
+                sx={{ width: '100%', alignItems: 'stretch' }}
+            >
+                {[
+                    { label: "Servidor", name: "server_device_id", value: formData.server_device_id, select: true, icon: Dns, options: servers },
+                    { label: "Criticidad", name: "priority_id", value: formData.priority_id, select: true, icon: Settings, options: options?.priorities },
+                    { label: "Responsable", name: "responsible_id", value: formData.responsible_id, select: true, icon: Person, options: users },
+                    { label: "Últ. Actualización", name: "last_update", value: formData.last_update, type: "date", icon: Update }
+                ].map((item, i) => (
+                    <Card
+                        key={i}
+                        variant="outlined"
+                        sx={{
+                            flex: 1,
+                            borderRadius: 3,
+                            border: '1px solid #e2e8f0',
+                            bgcolor: '#fff',
+                            boxShadow: 'none',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                    >
+                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, flexGrow: 1 }}>
+                            <DataField
+                                label={item.label}
+                                name={item.name}
+                                value={item.value}
+                                // icon={item.icon}
+                                type={item.type}
+                                select={item.select}
+                                optionsArray={item.options}
+                            />
+                        </CardContent>
+                    </Card>
+                ))}
+            </Stack>
 
-            {/* FILA 2: AREA Y TECNOLOGIAS (2 TARJETAS) */}
-            <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} md={4}>
-                    <Card variant="outlined" sx={{ borderRadius: 3, height: '100%' }}><CardContent>
-                        <DataField label="Área Solicitante" name="area_id" value={formData.area_id} select icon={Business} optionsArray={options?.areas} />
-                    </CardContent></Card>
-                </Grid>
-                <Grid item xs={12} md={8}>
-                    <Card variant="outlined" sx={{ borderRadius: 3, height: '100%' }}><CardContent>
-                        <DataField label="Tecnologías / Notas" name="technical_notes" value={formData.technical_notes} icon={Notes} multiline rows={2} />
-                    </CardContent></Card>
-                </Grid>
-            </Grid>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ width: '100%', alignItems: 'stretch', mb: 4 }}>
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        flex: 1,
+                        borderRadius: 3,
+                        p: 3,
+                        bgcolor: '#fff',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
+                    <Typography variant="h6" fontWeight="bold" mb={3} display="flex" alignItems="center" gap={1}>
+                        <Business color="primary" /> Áreas que usan el sistema
+                    </Typography>
+
+                    {isEditing ? (
+                        <TextField
+                            fullWidth
+                            select
+                            size="small"
+                            name="areas"
+                            value={formData.areas || []}
+                            onChange={handleChange}
+                            SelectProps={{ multiple: true }}
+                        >
+                            {options?.areas?.map(opt => (
+                                <MenuItem key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    ) : (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {options?.areas
+                                ?.filter(opt => formData.areas?.includes(opt.id))
+                                .map(opt => (
+                                    <Chip key={opt.id} label={opt.name} />
+                                ))
+                            }
+                        </Box>
+                    )}
+                </Paper>
+
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        flex: 1,
+                        borderRadius: 3,
+                        p: 3,
+                        bgcolor: '#fff',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
+                    <Typography variant="h6" fontWeight="bold" mb={3} display="flex" alignItems="center" gap={1}>
+                        <Notes color="primary" /> Notas Técnicas
+                    </Typography>
+
+                    {isEditing ? (
+                        <Autocomplete
+                            multiple
+                            freeSolo
+                            options={[]}
+                            value={formData.technical_notes || []}
+                            onChange={(e, newValue) =>
+                                setFormData(prev => ({
+                                    ...prev,
+                                    technical_notes: newValue
+                                }))
+                            }
+                            renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                    <Chip
+                                        label={option}
+                                        {...getTagProps({ index })}
+                                        sx={{ mb: 0.5 }}
+                                    />
+                                ))
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    size="small"
+                                    placeholder="Agregar tecnología"
+                                />
+                            )}
+                        />
+                    ) : (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {(formData.technical_notes || []).map((tech, i) => (
+                                <Chip key={i} label={tech} />
+                            ))}
+                        </Box>
+                    )}
+                </Paper>
+            </Stack>
 
             <Divider sx={{ mb: 4 }} />
 
-            {/* SECCIÓN DETALLES TÉCNICOS Y ACCESOS */}
             <Grid container spacing={4}>
-                {/* Accesos y Repositorios */}
                 <Grid item xs={12} md={6}>
                     <Typography variant="h6" fontWeight="bold" mb={3} display="flex" alignItems="center" gap={1}>
                         <Language color="primary" /> Accesos y Repositorios
@@ -170,7 +354,6 @@ export default function SystemFormView({
                     </Paper>
                 </Grid>
 
-                {/* Base de Datos */}
                 <Grid item xs={12} md={6}>
                     <Typography variant="h6" fontWeight="bold" mb={3} display="flex" alignItems="center" gap={1}>
                         <Storage color="primary" /> Configuración de Base de Datos
