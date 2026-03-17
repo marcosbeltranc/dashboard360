@@ -6,8 +6,9 @@ import {
     Chip, Divider, Stack, IconButton, MenuItem, Paper, Tab, Tabs, Avatar, Tooltip
 } from '@mui/material';
 import {
-    Edit, Save, Dns, Place, Event, Person, Settings, ArrowBack, Memory, Lock, SettingsInputComponent, Storage, Terminal, ContentCopy, AccountTree
+    Edit, Save, Dns, Place, Event, Person, Settings, ArrowBack, Memory, Lock, SettingsInputComponent, Storage, Terminal, ContentCopy, AccountTree, Assignment, Delete
 } from '@mui/icons-material';
+import api from '@/lib/api';
 
 export default function ServerFormView({ mode = 'view', initialData, options, onSave }) {
     const router = useRouter();
@@ -16,7 +17,17 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
     const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
-        if (initialData) setFormData(initialData);
+        if (initialData) {
+            const users = (initialData.server_users || []).map(u => ({
+                ...u,
+                tempId: u.id ?? crypto.randomUUID()
+            }));
+
+            setFormData({
+                ...initialData,
+                server_users: users
+            });
+        }
     }, [initialData]);
 
     const handleChange = (e) => {
@@ -24,9 +35,27 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
-        onSave(formData);
-        if (mode !== 'create') setIsEditing(false);
+    const handleSave = async () => {
+
+        const server = await onSave(formData);
+
+        if (formData.server_users) {
+
+            for (const user of formData.server_users) {
+
+                if (user.id) {
+                    await api.put(`/server-users/${user.id}`, user);
+                } else {
+                    await api.post('/server-users', {
+                        ...user,
+                        server_device_id: server.id || formData.id
+                    });
+                }
+
+            }
+        }
+
+        setIsEditing(false);
     };
 
     const handleCancel = () => {
@@ -90,7 +119,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             variant="outlined"
                             sx={{
                                 flex: 1,
-                                borderRadius: 3,
+                                borderRadius: 1,
                                 p: 3,
                                 bgcolor: '#fff',
                                 display: 'flex',
@@ -111,7 +140,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             variant="outlined"
                             sx={{
                                 flex: 1,
-                                borderRadius: 3,
+                                borderRadius: 1,
                                 p: 3,
                                 bgcolor: '#fff',
                                 display: 'flex',
@@ -124,7 +153,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                     display: 'grid',
                                     gridTemplateColumns: '1fr 1fr',
                                     border: '1px solid #f1f5f9',
-                                    borderRadius: 2,
+                                    borderRadius: 1,
                                     overflow: 'hidden',
                                     mb: 2,
                                     width: '100%',
@@ -162,7 +191,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                     variant="outlined"
                                     sx={{
                                         flex: 1,
-                                        borderRadius: 3,
+                                        borderRadius: 1,
                                         p: 3,
                                         bgcolor: '#fff',
                                         display: 'flex',
@@ -189,7 +218,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         sx={{
                             width: '100%',
                             borderRadius: '12px',
-                            p: 3, // Un poco más de padding queda mejor
+                            p: 3,
                             bgcolor: '#fff',
                             border: '1px solid #e2e8f0',
                         }}
@@ -221,7 +250,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                         py: 4,
                                         textAlign: 'center',
                                         bgcolor: '#f8fafc',
-                                        borderRadius: 3,
+                                        borderRadius: 1,
                                         border: '1px dashed #e2e8f0'
                                     }}>
                                         <Typography variant="body2" color="text.disabled">
@@ -251,6 +280,16 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             <Typography variant="caption" fontWeight="regular" color="text.secondary">
                                 Cuentas configuradas en el servidor
                             </Typography>
+                            {isEditing && mode !== 'create' && (
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={handleAddUser}
+                                    sx={{ mt: 2 }}
+                                >
+                                    Agregar Usuario
+                                </Button>
+                            )}
                         </Stack>
 
                         {/* Encabezado de la "Tabla" */}
@@ -272,7 +311,11 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         <Box>
                             {formData.server_users && formData.server_users.length > 0 ? (
                                 formData.server_users.map((user, index) => (
-                                    <UserRow key={index} user={user} />
+                                    <UserRow
+                                        key={user.id ?? user.tempId}
+                                        user={user}
+                                        index={index}
+                                    />
                                 ))
                             ) : (
                                 <Box sx={{ py: 6, textAlign: 'center' }}>
@@ -285,7 +328,71 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                     </Box>
                 );
             case 3:
-            // return <SistemasTab />;
+                return (
+
+                    <Box
+                        sx={{
+                            width: '100%',
+                            borderRadius: '12px',
+                            p: 3,
+                            bgcolor: '#fff',
+                            border: '1px solid #e2e8f0',
+                        }}
+                    >
+                        <Stack spacing={0.5} sx={{ mb: 2 }}>
+                            <Typography variant="h6" fontWeight="bold" >
+                                Sistemas
+                            </Typography>
+                        </Stack>
+                        <Grid container spacing={2}>
+                            {formData.system && formData.system.length > 0 ? (
+                                formData.system.map((sys, index) => (
+                                    <Grid item xs={12} md={6} key={index}>
+                                        <SystemCard item={sys} />
+                                    </Grid>
+                                ))
+                            ) : (
+                                <Grid item xs={12}>
+                                    <Box sx={{
+                                        py: 4,
+                                        textAlign: 'center',
+                                        bgcolor: '#f8fafc',
+                                        borderRadius: 1,
+                                        border: '1px dashed #e2e8f0'
+                                    }}>
+                                        <Typography variant="body2" color="text.disabled">
+                                            No hay métodos de acceso configurados para este servidor.
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            )}
+                        </Grid>
+                    </Box>
+                );
+            case 4:
+                return (
+                    <>
+                        <Grid></Grid>
+                        <Box sx={{
+                            width: '100%',
+                            borderRadius: '12px',
+                            p: 3,
+                            bgcolor: '#fff',
+                            border: '1px solid #e2e8f0',
+                        }}
+                        >
+                            <Stack spacing={0.5} mb={3}>
+                                <Typography variant="h6" fontWeight="bold">
+                                    Registro de Actualizaciones
+                                </Typography>
+                                <Typography variant="caption" fontWeight="regular" color="grey" sx={{ letterSpacing: 1 }}>
+                                    0 actualizaciones registradas
+                                </Typography>
+                            </Stack>
+
+                        </Box>
+                    </>
+                );
             default:
                 return null;
         }
@@ -301,7 +408,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                 variant="outlined"
                 sx={{
                     p: 2,
-                    borderRadius: 3,
+                    borderRadius: 1,
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: 2,
@@ -312,7 +419,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                 <Box sx={{
                     p: 1.5,
                     bgcolor: '#eff6ff',
-                    borderRadius: 2,
+                    borderRadius: 1,
                     display: 'flex',
                     color: '#3b82f6'
                 }}>
@@ -346,17 +453,120 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         );
     };
 
-    const UserRow = ({ user }) => {
+    const SystemCard = ({ item }) => {
         const handleCopy = (text) => {
             if (text) navigator.clipboard.writeText(text);
         };
 
+        return (
+            <Paper
+                variant="outlined"
+                sx={{
+                    p: 2,
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2,
+                    transition: '0.2s',
+                    '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
+                }}
+            >
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                        p: 1.5,
+                        bgcolor: '#eff6ff',
+                        borderRadius: 1,
+                        display: 'flex',
+                        color: '#3b82f6'
+                    }}>
+                        <AccountTree fontSize="small" />
+                    </Box>
+
+                    <Box>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
+                            {item.name}
+                        </Typography>
+
+                        {item.description && (
+                            <Typography variant="body2" color="text.secondary">
+                                {item.description}
+                            </Typography>
+                        )}
+                    </Box>
+                </Box>
+
+                {item.status && (
+                    <Chip
+                        label={item.status.name}
+                        size="small"
+                        sx={{
+                            fontWeight: 500,
+                            textTransform: 'lowercase',
+                            bgcolor: `${item.status.color}20`, // fondo suave
+                            color: item.status.color,
+                            border: `1px solid ${item.status.color}40`
+                        }}
+                    />
+                )}
+            </Paper>
+        );
+    };
+
+    const UserRow = ({ user, index }) => {
         const typeStyles = {
             'Administrador': { bgcolor: '#fee2e2', color: '#ef4444', label: 'Administrador' },
             'Servicio': { bgcolor: '#eff6ff', color: '#3b82f6', label: 'Servicio' }
         };
 
-        const style = typeStyles[user.type] || { bgcolor: '#f1f5f9', color: '#64748b', label: user.type };
+        const style = typeStyles[user.type] || {
+            bgcolor: '#f1f5f9',
+            color: '#64748b',
+            label: user.type
+        };
+        if (isEditing) {
+            return (
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '1.5fr 1fr 2fr 48px',
+                        gap: 1,
+                        py: 1
+                    }}
+                >
+
+                    <TextField
+                        size="small"
+                        value={user.name}
+                        onChange={(e) => handleUserChange(index, 'name', e.target.value)}
+                    />
+
+                    <TextField
+                        select
+                        size="small"
+                        value={user.type}
+                        onChange={(e) => handleUserChange(index, 'type', e.target.value)}
+                    >
+                        <MenuItem value="Administrador">Administrador</MenuItem>
+                        <MenuItem value="Servicio">Servicio</MenuItem>
+                    </TextField>
+
+                    <TextField
+                        size="small"
+                        value={user.description}
+                        onChange={(e) => handleUserChange(index, 'description', e.target.value)}
+                    />
+
+                    <IconButton
+                        color="error"
+                        onClick={() => handleDeleteUser(index, user.id)}
+                    >
+                        <Delete />
+                    </IconButton>
+
+                </Box>
+            );
+        }
 
         return (
             <Box sx={{
@@ -390,13 +600,52 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                     {user.description || '—'}
                 </Typography>
 
-                <Tooltip title="Copiar usuario">
-                    <IconButton size="small" onClick={() => handleCopy(user.username)}>
-                        <ContentCopy sx={{ fontSize: 18, color: '#94a3b8' }} />
-                    </IconButton>
-                </Tooltip>
             </Box>
         );
+    };
+
+    const handleAddUser = () => {
+        const newUser = {
+            tempId: crypto.randomUUID(),
+            name: '',
+            password: '',
+            description: '',
+            type: 'Servicio'
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            server_users: [...(prev.server_users || []), newUser]
+        }));
+    };
+
+    const handleDeleteUser = async (index, id) => {
+
+        if (id) {
+            await api.delete(`/server-users/${id}`);
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            server_users: prev.server_users.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleUserChange = (index, field, value) => {
+
+        setFormData(prev => {
+            const users = [...prev.server_users];
+
+            users[index] = {
+                ...users[index],
+                [field]: value
+            };
+
+            return {
+                ...prev,
+                server_users: users
+            };
+        });
     };
 
     return (
@@ -404,7 +653,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
             {/* Header / Top Bar */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 2 }}>
+                    <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 1 }}>
                         <ArrowBack fontSize="small" />
                     </IconButton>
                     <Box>
@@ -463,20 +712,20 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             variant="contained"
                             startIcon={<Edit />}
                             onClick={() => setIsEditing(true)}
-                            sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                            sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                         >
                             Editar Equipo
                         </Button>
                     ) : (
                         <>
-                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#fff' }}>
+                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#fff' }}>
                                 Cancelar
                             </Button>
                             <Button
                                 variant="contained"
                                 startIcon={<Save />}
                                 onClick={handleSave}
-                                sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                                sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                             >
                                 {mode === 'create' ? 'Crear Activo' : 'Guardar Cambios'}
                             </Button>
@@ -497,7 +746,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             onChange={handleChange}
                             variant="outlined"
                             label="Estado del Equipo"
-                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                         >
                             {options?.statuses?.map(opt => (
                                 <MenuItem key={opt.id} value={opt.id}>
@@ -514,14 +763,14 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             bgcolor: formData.status_id === 10 ? '#dcfce7' : '#fee2e2',
                             color: formData.status_id === 10 ? '#166534' : '#991b1b',
                             fontWeight: 'bold',
-                            borderRadius: 1.5
+                            borderRadius: 1
                         }}
                     />
                 )}
 
                 {/* Estos se mantienen como Chips informativos */}
-                <Chip label={formData.sku || 'SKU-PENDIENTE'} size="small" variant="outlined" sx={{ borderRadius: 1.5, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
-                <Chip label={formData.brand || 'Marca N/A'} size="small" variant="outlined" sx={{ borderRadius: 1.5, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
+                <Chip label={formData.sku || 'SKU-PENDIENTE'} size="small" variant="outlined" sx={{ borderRadius: 1, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
+                <Chip label={formData.brand || 'Marca N/A'} size="small" variant="outlined" sx={{ borderRadius: 1, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
             </Stack>
 
             <Stack
@@ -541,7 +790,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         variant="outlined"
                         sx={{
                             flex: 1,
-                            borderRadius: 3,
+                            borderRadius: 1,
                             border: '1px solid #e2e8f0',
                             bgcolor: '#fff',
                             boxShadow: 'none',
@@ -578,6 +827,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                     <Tab icon={<Lock fontSize="small" />} iconPosition="start" label="Accesos" />
                     <Tab icon={<Person fontSize="small" />} iconPosition="start" label="Usuarios Windows" />
                     <Tab icon={<Dns fontSize="small" />} iconPosition="start" label="Sistemas" />
+                    <Tab icon={<Assignment fontSize="small" />} iconPosition="start" label="Actualizaciones" />
                 </Tabs>
             </Box>
 

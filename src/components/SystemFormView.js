@@ -106,12 +106,16 @@ export default function SystemFormView({
 
     console.log(options?.priorities);
     const status = options?.statuses?.find(s => s.id === formData.status_id);
+    const selectedServer = servers?.find(
+        s => s.id === formData.server_device_id
+    );
+    console.log(selectedServer);
     return (
         <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
             {/* HEADER */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 2 }}>
+                    <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 1 }}>
                         <ArrowBack fontSize="small" />
                     </IconButton>
                     <Box>
@@ -142,7 +146,7 @@ export default function SystemFormView({
                                         value={formData.status_id || ''}
                                         onChange={handleChange}
                                         label="Estado"
-                                        sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 }, minWidth: 100 }}
+                                        sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 1 }, minWidth: 100 }}
                                     >
                                         {options?.statuses?.map(opt => (
                                             <MenuItem key={opt.id} value={opt.id}>
@@ -159,7 +163,7 @@ export default function SystemFormView({
                                         bgcolor: `${status?.color}20`,
                                         color: status?.color || '#64748b',
                                         fontWeight: 'bold',
-                                        borderRadius: 1.5
+                                        borderRadius: 1
                                     }}
                                 />
                             )}
@@ -189,20 +193,73 @@ export default function SystemFormView({
                             variant="contained"
                             startIcon={<Edit />}
                             onClick={() => setIsEditing(true)}
-                            sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                            sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                         >Editar</Button>
                     ) : (
                         <>
-                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#fff' }}>
+                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#fff' }}>
                                 Cancelar
                             </Button>
-                            <Button variant="contained" startIcon={<Save />} onClick={handleSave} sx={{ borderRadius: 2, textTransform: 'none', px: 3 }} >Guardar</Button>
+                            <Button variant="contained" startIcon={<Save />} onClick={handleSave} sx={{ borderRadius: 1, textTransform: 'none', px: 3 }} >Guardar</Button>
                         </>
                     )}
                 </Stack>
             </Box>
-
             <Stack
+                direction="row"
+                spacing={3}
+                mb={4}
+                sx={{ width: '100%', alignItems: 'stretch' }}
+            >
+                {[
+                    { label: "Servidor", name: "server_device_id", value: formData.server_device_id, select: true, icon: Dns, options: servers },
+                    { label: "Criticidad", name: "priority_id", value: formData.priority_id, select: true, icon: Settings, options: options?.priorities },
+                    { label: "Responsable", name: "responsible_id", value: formData.responsible_id, select: true, icon: Person, options: users },
+                    { label: "Últ. Actualización", name: "last_update", value: formData.last_update, type: "date", icon: Update }
+                ].map((item, i) => (
+                    <Card
+                        key={i}
+                        variant="outlined"
+                        sx={{
+                            flex: 1,
+                            borderRadius: 1,
+                            border: '1px solid #e2e8f0',
+                            bgcolor: '#fff',
+                            boxShadow: 'none',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                    >
+                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, flexGrow: 1 }}>
+                            <DataField
+                                label={item.label}
+                                name={item.name}
+                                value={item.value}
+                                type={item.type}
+                                select={item.select}
+                                optionsArray={item.options}
+                            />
+
+                            {
+                                item.name === "server_device_id" && selectedServer?.ip_address && (
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            mt: -2,
+                                            display: "block",
+                                            color: "text.secondary",
+                                            fontFamily: "monospace"
+                                        }}
+                                    >
+                                        {selectedServer.ip_address}
+                                    </Typography>
+                                )
+                            }
+                        </CardContent>
+                    </Card>
+                ))}
+            </Stack>
+            {/* <Stack
                 direction="row"
                 spacing={3}
                 mb={4}
@@ -232,7 +289,6 @@ export default function SystemFormView({
                                 label={item.label}
                                 name={item.name}
                                 value={item.value}
-                                // icon={item.icon}
                                 type={item.type}
                                 select={item.select}
                                 optionsArray={item.options}
@@ -240,14 +296,14 @@ export default function SystemFormView({
                         </CardContent>
                     </Card>
                 ))}
-            </Stack>
+            </Stack> */}
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ width: '100%', alignItems: 'stretch', mb: 4 }}>
                 <Paper
                     variant="outlined"
                     sx={{
                         flex: 1,
-                        borderRadius: 3,
+                        borderRadius: 1,
                         p: 3,
                         bgcolor: '#fff',
                         display: 'flex',
@@ -290,7 +346,7 @@ export default function SystemFormView({
                     variant="outlined"
                     sx={{
                         flex: 1,
-                        borderRadius: 3,
+                        borderRadius: 1,
                         p: 3,
                         bgcolor: '#fff',
                         display: 'flex',
@@ -342,40 +398,65 @@ export default function SystemFormView({
 
             <Divider sx={{ mb: 4 }} />
 
-            <Grid container spacing={4}>
-                <Grid item xs={12} md={6}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ width: '100%', alignItems: 'stretch', mb: 4 }}>
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        flex: 1,
+                        borderRadius: 1,
+                        p: 3,
+                        bgcolor: '#fff',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
                     <Typography variant="h6" fontWeight="bold" mb={3} display="flex" alignItems="center" gap={1}>
                         <Language color="primary" /> Accesos y Repositorios
                     </Typography>
-                    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-                        <DataField label="URL de Acceso" name="url" value={formData.url} icon={Language} />
-                        <DataField label="Repositorio (Git)" name="repository_url" value={formData.repository_url} icon={Terminal} />
-                        <DataField label="Documentación API" name="api_doc_url" value={formData.api_doc_url} icon={Description} />
-                    </Paper>
-                </Grid>
 
-                <Grid item xs={12} md={6}>
+                    <DataField label="URL de Acceso" name="url" value={formData.url} icon={Language} />
+                    <DataField label="Repositorio (Git)" name="repository_url" value={formData.repository_url} icon={Terminal} />
+                    <DataField label="Documentación API" name="api_doc_url" value={formData.api_doc_url} icon={Description} />
+                </Paper>
+
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        flex: 1,
+                        borderRadius: 1,
+                        p: 3,
+                        bgcolor: '#fff',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
                     <Typography variant="h6" fontWeight="bold" mb={3} display="flex" alignItems="center" gap={1}>
-                        <Storage color="primary" /> Configuración de Base de Datos
+                        <Storage color="primary" /> Base de Datos
                     </Typography>
-                    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={6}>
-                                <DataField label="Motor BD" name="db_engine" value={formData.db_engine} icon={Settings} />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <DataField label="Nombre BD" name="db_name" value={formData.db_name} icon={Code} />
-                            </Grid>
-                            <Grid item xs={8}>
-                                <DataField label="Host / IP" name="db_host" value={formData.db_host} icon={Lan} />
-                            </Grid>
-                            <Grid item xs={4}>
-                                <DataField label="Puerto" name="db_port" value={formData.db_port} type="number" icon={Settings} />
-                            </Grid>
+
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                            <DataField label="Motor BD" name="db_engine" value={formData.db_engine} icon={Settings} />
                         </Grid>
-                    </Paper>
-                </Grid>
-            </Grid>
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                            <DataField label="Nombre BD" name="db_name" value={formData.db_name} icon={Code} />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                            <DataField label="Host / IP" name="db_host" value={formData.db_host} icon={Lan} />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                            <DataField label="Puerto" name="db_port" value={formData.db_port} type="number" icon={Settings} />
+                        </Grid>
+                    </Grid>
+                </Paper>
+            </Stack>
+
         </Box>
     );
 }

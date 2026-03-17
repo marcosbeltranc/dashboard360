@@ -108,6 +108,17 @@ export default function Sistemas() {
         setOpenFormModal(true);
     };
 
+    const handleDeleteOption = async (optionId) => {
+        try {
+            await api.delete(`/options/${optionId}`);
+            await fetchGroups();
+            setOpenOptionsModal(false);
+        } catch (error) {
+            console.error("Error al eliminar opción:", error);
+            alert("Hubo un error al eliminar la opción.");
+        }
+    };
+
     const handleSaveOption = async () => {
         if (!formOption.name || !selectedGroup) return;
 
@@ -165,7 +176,7 @@ export default function Sistemas() {
                     </Typography>
                     <Typography color="text.secondary">Gestiona las categorías y listas de valores del sistema</Typography>
                 </Box>
-                <Button variant="contained" startIcon={<Add />} onClick={() => setOpenGroupModal(true)}>
+                <Button variant="contained" startIcon={<Add />} onClick={() => setOpenGroupModal(true)} sx={{ borderRadius: 1 }}>
                     Nuevo Grupo
                 </Button>
             </Box>
@@ -179,7 +190,7 @@ export default function Sistemas() {
                     }}>
                         <Paper sx={{
                             p: 3,
-                            borderRadius: 4,
+                            borderRadius: 1,
                             border: '1px solid #e2e8f0',
                             height: '100%'
                         }}>
@@ -209,7 +220,7 @@ export default function Sistemas() {
                                     <Typography variant="caption" fontWeight="700" color="#64748b">
                                         {group.options?.length || 0} Opciones
                                     </Typography>
-                                    <Button size="small" variant="outlined" startIcon={<Visibility />} onClick={() => handleOpenOptions(group)}>
+                                    <Button size="small" variant="outlined" startIcon={<Visibility />} onClick={() => handleOpenOptions(group)} sx={{ borderRadius: 1 }}>
                                         Gestionar
                                     </Button>
                                 </Box>
@@ -232,7 +243,7 @@ export default function Sistemas() {
                 </DialogTitle>
                 <DialogContent dividers>
                     <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreateForm}>
+                        <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreateForm} sx={{ borderRadius: 1 }}>
                             Nuevo Ítem
                         </Button>
                     </Box>
@@ -257,7 +268,7 @@ export default function Sistemas() {
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                             <IconButton size="small" color="error">
-                                                <DeleteIcon fontSize="small" />
+                                                <DeleteIcon fontSize="small" onClick={() => handleDeleteOption(option.id)} />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>
@@ -267,7 +278,7 @@ export default function Sistemas() {
                     </TableContainer>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenOptionsModal(false)}>Cerrar</Button>
+                    <Button onClick={() => setOpenOptionsModal(false)} sx={{ borderRadius: 1 }}>Cerrar</Button>
                 </DialogActions>
             </Dialog>
 
@@ -278,7 +289,11 @@ export default function Sistemas() {
                     <Typography variant="caption" display="block" mb={2}>Categoría: {selectedGroup?.name}</Typography>
                     <Stack spacing={2}>
                         <TextField fullWidth label="Nombre" size="small" value={formOption.name}
-                            onChange={(e) => setFormOption({ ...formOption, name: e.target.value })} />
+                            onChange={(e) => setFormOption({ ...formOption, name: e.target.value })} sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 1
+                                }
+                            }} />
                         <Box>
                             <Typography variant="caption" fontWeight="bold">Color</Typography>
                             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
@@ -292,12 +307,16 @@ export default function Sistemas() {
                             </Box>
                         </Box>
                         <TextField type="number" label="Orden" size="small" value={formOption.sort_order}
-                            onChange={(e) => setFormOption({ ...formOption, sort_order: e.target.value })} />
+                            onChange={(e) => setFormOption({ ...formOption, sort_order: e.target.value })} sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 1
+                                }
+                            }} />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenFormModal(false)}>Cancelar</Button>
-                    <Button onClick={handleSaveOption} variant="contained" startIcon={<Save />} disabled={!formOption.name}>
+                    <Button onClick={() => setOpenFormModal(false)} sx={{ borderRadius: 1 }}>Cancelar</Button>
+                    <Button onClick={handleSaveOption} variant="contained" startIcon={<Save />} disabled={!formOption.name} sx={{ borderRadius: 1 }}>
                         {editingOption ? 'Guardar' : 'Crear'}
                     </Button>
                 </DialogActions>

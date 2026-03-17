@@ -54,7 +54,7 @@ export default function LoginPage() {
     return (
         <Box className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
             <Container maxWidth="xs">
-                <Card elevation={10} sx={{ borderRadius: 4, overflow: 'visible' }}>
+                <Card elevation={10} sx={{ borderRadius: 1, overflow: 'visible' }}>
                     <CardContent className="p-8">
                         <Image
                             src="/logo_c.svg"
@@ -74,6 +74,11 @@ export default function LoginPage() {
                                 required
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 1
+                                    }
+                                }}
                             />
 
                             <TextField
@@ -94,6 +99,11 @@ export default function LoginPage() {
                                         </InputAdornment>
                                     )
                                 }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 1
+                                    }
+                                }}
                             />
 
                             <Button
@@ -107,7 +117,7 @@ export default function LoginPage() {
                                     mt: 4,
                                     py: 1.8,
                                     fontWeight: 'bold',
-                                    borderRadius: 3,
+                                    borderRadius: 1,
                                     textTransform: 'none',
                                     fontSize: '1.1rem',
                                     transition: 'transform 0.1s ease-in-out',

@@ -151,7 +151,7 @@ export default function InfraestructuraGestion() {
                         <Button
                             variant="contained" startIcon={<Add />}
                             onClick={() => router.push('/infraestructura/servers/new')}
-                            sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                            sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                         >
                             Nuevo Servidor
                         </Button>
@@ -160,7 +160,7 @@ export default function InfraestructuraGestion() {
                         <Button
                             variant="contained" startIcon={<Add />}
                             onClick={() => router.push('/infraestructura/nas/new')}
-                            sx={{ borderRadius: 2, textTransform: 'none', px: 3, bgcolor: '#a855f7', '&:hover': { bgcolor: '#9333ea' } }}
+                            sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#a855f7', '&:hover': { bgcolor: '#9333ea' } }}
                         >
                             Nuevo NAS
                         </Button>
@@ -169,7 +169,7 @@ export default function InfraestructuraGestion() {
                         <Button
                             variant="contained" startIcon={<Add />}
                             onClick={handleOpenCreateNetwork}
-                            sx={{ borderRadius: 2, textTransform: 'none', px: 3, bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
+                            sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
                         >
                             Nuevo Dispositivo de Red
                         </Button>
@@ -193,7 +193,7 @@ export default function InfraestructuraGestion() {
                         minWidth: 0
                     }}>
                         <Card variant="outlined" sx={{
-                            borderRadius: 3,
+                            borderRadius: 1,
                             border: '1px solid #e2e8f0',
                             boxShadow: 'none',
                             width: '100%', // La tarjeta llena el espacio exacto del Grid item
@@ -210,7 +210,7 @@ export default function InfraestructuraGestion() {
                                 <Box sx={{
                                     p: 1.5,
                                     bgcolor: card.color,
-                                    borderRadius: 2,
+                                    borderRadius: 1,
                                     display: 'flex',
                                     flexShrink: 0 // Evita que el icono se aplaste si el texto es largo
                                 }}>
@@ -235,7 +235,7 @@ export default function InfraestructuraGestion() {
             </Grid>
 
             {/* Filtros */}
-            <Paper sx={{ p: 2, mb: 3, borderRadius: 3, display: 'flex', gap: 2, alignItems: 'center', boxShadow: 'none', border: '1px solid #e2e8f0' }}>
+            <Paper sx={{ p: 2, mb: 3, borderRadius: 1, display: 'flex', gap: 2, alignItems: 'center', boxShadow: 'none', border: '1px solid #e2e8f0' }}>
                 <TextField
                     fullWidth size="small" placeholder="Buscar por nombre o IP..."
                     value={search} onChange={(e) => setSearch(e.target.value)}
@@ -258,7 +258,7 @@ export default function InfraestructuraGestion() {
             </Tabs>
 
             {/* Tabla */}
-            <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
+            <TableContainer component={Paper} sx={{ borderRadius: 1, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
                 <Table>
                     <TableHead sx={{ bgcolor: '#f1f5f9' }}>
                         <TableRow>

@@ -102,7 +102,7 @@ export default function Sidebar() {
                             <ListItemButton
                                 onClick={() => router.push(item.path)}
                                 sx={{
-                                    borderRadius: 1.5,
+                                    borderRadius: 1,
                                     py: 1,
                                     bgcolor: isActive ? '#f1f5f9' : 'transparent',
                                     color: isActive ? 'primary.main' : 'text.secondary',

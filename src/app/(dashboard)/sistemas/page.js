@@ -123,7 +123,7 @@ export default function SistemasGestion() {
                     variant="contained"
                     startIcon={<Add />}
                     onClick={() => router.push('/sistemas/new')} // Cambiado de setOpenModal
-                    sx={{ borderRadius: 2, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
+                    sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
                 >
                     Nuevo Sistema
                 </Button>
@@ -136,7 +136,7 @@ export default function SistemasGestion() {
                     size="small"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    sx={{ bgcolor: 'white', borderRadius: 2, width: 300 }}
+                    sx={{ bgcolor: 'white', borderRadius: 1, width: 300 }}
                     InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
                 />
                 <TextField select size="small" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} sx={{ bgcolor: 'white', minWidth: 160 }}>
@@ -160,7 +160,7 @@ export default function SistemasGestion() {
                     return (
                         <Grid item xs={12} sm={6} md={4} key={sys.id}>
                             <Card sx={{
-                                borderRadius: 4,
+                                borderRadius: 1,
                                 border: '1px solid #e2e8f0',
                                 boxShadow: 'none',
                                 transition: '0.2s',
@@ -169,7 +169,7 @@ export default function SistemasGestion() {
                                 <CardContent>
                                     <Box display="flex" justifyContent="space-between" mb={2}>
                                         <Stack direction="row" spacing={2} alignItems="center">
-                                            <Box sx={{ bgcolor: '#eff6ff', p: 1, borderRadius: 2, display: 'flex' }}>
+                                            <Box sx={{ bgcolor: '#eff6ff', p: 1, borderRadius: 1, display: 'flex' }}>
                                                 <Language sx={{ color: '#3b82f6' }} />
                                             </Box>
                                             <Box>
@@ -201,11 +201,7 @@ export default function SistemasGestion() {
                                         {sys.description || 'Sin descripción técnica.'}
                                     </Typography>
 
-                                    <Stack direction="row" spacing={1} mb={3}>
-                                        <Chip label={sys.area?.name} size="small" variant="outlined" sx={{ fontSize: 11 }} />
-                                    </Stack>
-
-                                    <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ pt: 2, borderTop: '1px solid #f1f5f9' }}>
+                                    {/* <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ pt: 2, borderTop: '1px solid #f1f5f9' }}>
                                         <Chip
                                             label={sys.priority?.name}
                                             size="small"
@@ -223,13 +219,13 @@ export default function SistemasGestion() {
                                                 </Box>
                                             </Tooltip>
                                         </Stack>
-                                    </Box>
+                                    </Box> */}
 
                                     {sys.url && (
                                         <Button
                                             fullWidth variant="outlined" startIcon={<OpenInNew />}
                                             href={sys.url} target="_blank"
-                                            sx={{ mt: 2, borderRadius: 2, textTransform: 'none', color: '#1e293b', borderColor: '#e2e8f0' }}
+                                            sx={{ borderRadius: 1, textTransform: 'none', color: '#1e293b', borderColor: '#e2e8f0' }}
                                         >
                                             Ir al Sistema
                                         </Button>

@@ -85,7 +85,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
         <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 2 }}>
+                    <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 1 }}>
                         <ArrowBack fontSize="small" />
                     </IconButton>
                     <Box>
@@ -143,20 +143,20 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                             variant="contained"
                             startIcon={<Edit />}
                             onClick={() => setIsEditing(true)}
-                            sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                            sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                         >
                             Editar Equipo
                         </Button>
                     ) : (
                         <>
-                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#fff' }}>
+                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#fff' }}>
                                 Cancelar
                             </Button>
                             <Button
                                 variant="contained"
                                 startIcon={<Save />}
                                 onClick={handleSave}
-                                sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+                                sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                             >
                                 {mode === 'create' ? 'Crear Activo' : 'Guardar Cambios'}
                             </Button>
@@ -177,7 +177,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                             onChange={handleChange}
                             variant="outlined"
                             label="Estado del Equipo"
-                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                         >
                             {options?.statuses?.map(opt => (
                                 <MenuItem key={opt.id} value={opt.id}>
@@ -194,13 +194,13 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                             bgcolor: formData.status_id === 10 ? '#dcfce7' : '#fee2e2',
                             color: formData.status_id === 10 ? '#166534' : '#991b1b',
                             fontWeight: 'bold',
-                            borderRadius: 1.5
+                            borderRadius: 1
                         }}
                     />
                 )}
 
-                <Chip label={formData.sku || 'SKU-PENDIENTE'} size="small" variant="outlined" sx={{ borderRadius: 1.5, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
-                <Chip label={formData.brand || 'Marca N/A'} size="small" variant="outlined" sx={{ borderRadius: 1.5, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
+                <Chip label={formData.sku || 'SKU-PENDIENTE'} size="small" variant="outlined" sx={{ borderRadius: 1, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
+                <Chip label={formData.brand || 'Marca N/A'} size="small" variant="outlined" sx={{ borderRadius: 1, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
             </Stack>
 
             <Stack
@@ -220,7 +220,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                         variant="outlined"
                         sx={{
                             flex: 1,
-                            borderRadius: 3,
+                            borderRadius: 1,
                             border: '1px solid #e2e8f0',
                             bgcolor: '#fff',
                             boxShadow: 'none',
@@ -252,7 +252,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                         variant="outlined"
                         sx={{
                             flex: 1,
-                            borderRadius: 3,
+                            borderRadius: 1,
                             p: 3,
                             bgcolor: '#fff',
                             display: 'flex',
@@ -265,7 +265,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                                 display: 'grid',
                                 gridTemplateColumns: '1fr 1fr',
                                 border: '1px solid #f1f5f9',
-                                borderRadius: 2,
+                                borderRadius: 1,
                                 overflow: 'hidden',
                                 mb: 2,
                                 width: '100%',
@@ -299,7 +299,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                         variant="outlined"
                         sx={{
                             flex: 1,
-                            borderRadius: 3,
+                            borderRadius: 1,
                             p: 3,
                             bgcolor: '#fff',
                             display: 'flex',
@@ -395,7 +395,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                                     display: 'grid',
                                     gridTemplateColumns: '1fr 1fr',
                                     border: '1px solid #f1f5f9',
-                                    borderRadius: 2,
+                                    borderRadius: 1,
                                     overflow: 'hidden',
                                     mb: 2,
                                     width: '100%',
