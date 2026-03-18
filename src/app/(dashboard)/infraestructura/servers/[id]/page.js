@@ -8,7 +8,7 @@ import { Box, CircularProgress } from '@mui/material';
 export default function ViewServerPage() {
     const { id } = useParams();
     const [server, setServer] = useState(null);
-    const [options, setOptions] = useState({ statuses: [], locations: [], serverTypes: [], responsibles: [] });
+    const [options, setOptions] = useState({ statuses: [], locations: [], serverTypes: [], responsibles: [], maintenance_type: [] });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -30,13 +30,14 @@ export default function ViewServerPage() {
                     statuses: grouped.status_type || [],
                     locations: grouped.location || [],
                     serverTypes: grouped.server_type || [],
-                    responsibles: respRes.data.data || respRes.data || []
+                    responsibles: respRes.data.data || respRes.data || [],
+                    maintenance_type: grouped.maintenance_type || [],
                 });
             } catch (e) { console.error(e); } finally { setLoading(false); }
         };
         if (id) fetchData();
     }, [id]);
-
+    console.log(options);
     const handleUpdate = async (formData) => {
         try { await api.put(`/server-devices/${id}`, formData); }
         catch (e) { console.error(e); }

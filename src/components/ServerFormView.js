@@ -3,29 +3,135 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Box, Grid, Typography, Card, CardContent, TextField, Button,
-    Chip, Divider, Stack, IconButton, MenuItem, Paper, Tab, Tabs, Avatar, Tooltip
+    Chip, Divider, Stack, IconButton, MenuItem, Paper, Tab, Tabs, Avatar, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import {
     Edit, Save, Dns, Place, Event, Person, Settings, ArrowBack, Memory, Lock, SettingsInputComponent, Storage, Terminal, ContentCopy, AccountTree, Assignment, Delete
 } from '@mui/icons-material';
 import api from '@/lib/api';
+import toast from "react-hot-toast";
+import DeviceMaintenanceTab from './DeviceMaintenanceTab';
+
+const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
+    const typeStyles = {
+        'Administrador': { bgcolor: '#fee2e2', color: '#ef4444', label: 'Administrador' },
+        'Servicio': { bgcolor: '#eff6ff', color: '#3b82f6', label: 'Servicio' }
+    };
+
+    const style = typeStyles[user.type] || {
+        bgcolor: '#f1f5f9',
+        color: '#64748b',
+        label: user.type
+    };
+
+    if (isEditing) {
+        return (
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1.5fr 1fr 2fr 48px',
+                    gap: 1,
+                    py: 1
+                }}
+            >
+                <TextField
+                    size="small"
+                    value={user.name || ''}
+                    onChange={(e) => onUserChange(index, 'name', e.target.value)}
+                />
+
+                <TextField
+                    select
+                    size="small"
+                    value={user.type || 'Servicio'}
+                    onChange={(e) => onUserChange(index, 'type', e.target.value)}
+                >
+                    <MenuItem value="Administrador">Administrador</MenuItem>
+                    <MenuItem value="Servicio">Servicio</MenuItem>
+                </TextField>
+
+                <TextField
+                    size="small"
+                    value={user.description || ''}
+                    onChange={(e) => onUserChange(index, 'description', e.target.value)}
+                />
+
+                <IconButton
+                    color="error"
+                    onClick={() => onDeleteUser(index, user.id)}
+                >
+                    <Delete />
+                </IconButton>
+            </Box>
+        );
+    }
+
+    return (
+        <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: '1.5fr 1fr 2fr 48px',
+            alignItems: 'center',
+            py: 2,
+            px: 1,
+            borderBottom: '1px solid #f1f5f9',
+            '&:hover': { bgcolor: '#fafafa' }
+        }}>
+            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                {user.name}
+            </Typography>
+
+            <Box>
+                <Chip
+                    label={style.label}
+                    size="small"
+                    sx={{
+                        bgcolor: style.bgcolor,
+                        color: style.color,
+                        fontWeight: 'bold',
+                        fontSize: '0.7rem',
+                        height: 20
+                    }}
+                />
+            </Box>
+
+            <Typography variant="body2" color="text.secondary">
+                {user.description || '—'}
+            </Typography>
+        </Box>
+    );
+};
 
 export default function ServerFormView({ mode = 'view', initialData, options, onSave }) {
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(mode === 'create' || mode === 'edit');
     const [formData, setFormData] = useState(initialData || {});
     const [activeTab, setActiveTab] = useState(0);
+    const [openUserModal, setOpenUserModal] = useState(false);
+
+    const [newUser, setNewUser] = useState({
+        name: '',
+        password: '',
+        description: '',
+        type: 'Servicio'
+    });
 
     useEffect(() => {
         if (initialData) {
+            // Normalizamos usuarios y accesos con IDs temporales para la edición
             const users = (initialData.server_users || []).map(u => ({
                 ...u,
                 tempId: u.id ?? crypto.randomUUID()
             }));
 
+            const access = (initialData.server_access || []).map(a => ({
+                ...a,
+                tempId: a.id ?? crypto.randomUUID()
+            }));
+
             setFormData({
                 ...initialData,
-                server_users: users
+                server_users: users,
+                server_access: access
             });
         }
     }, [initialData]);
@@ -36,26 +142,47 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
     };
 
     const handleSave = async () => {
-
         const server = await onSave(formData);
-
-        if (formData.server_users) {
-
-            for (const user of formData.server_users) {
-
-                if (user.id) {
-                    await api.put(`/server-users/${user.id}`, user);
-                } else {
-                    await api.post('/server-users', {
+        const serverId = server?.id || formData.id;
+        let flag = false;
+        try {
+            // Guardar Usuarios
+            if (formData.server_users) {
+                for (const user of formData.server_users) {
+                    const payload = {
                         ...user,
-                        server_device_id: server.id || formData.id
-                    });
-                }
+                        server_device_id: serverId
+                    };
 
+                    if (user.id) {
+                        await api.put(`/server-users/${user.id}`, payload);
+                    } else {
+                        await api.post('/server-users', payload);
+                    }
+                }
             }
+        } catch (error) {
+            toast.error("Error: Revisa la seccion de usuarios");
+            flag = true;
         }
 
-        setIsEditing(false);
+        try {
+            // Guardar Accesos
+            if (formData.server_access) {
+                for (const acc of formData.server_access) {
+                    const payload = { ...acc, server_device_id: serverId };
+                    acc.id ? await api.put(`/server-access/${acc.id}`, payload) : await api.post('/server-access', payload);
+                }
+            }
+        } catch (error) {
+            toast.error("Error: Revisa la seccion de accesos");
+            flag = true;
+        }
+
+        if (!flag) {
+            setIsEditing(false);
+        }
+
     };
 
     const handleCancel = () => {
@@ -65,6 +192,80 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
             setFormData(initialData);
             setIsEditing(false);
         }
+    };
+
+    const handleAddUser = () => {
+        const newUser = {
+            tempId: crypto.randomUUID(),
+            name: '',
+            password: '',
+            description: '',
+            type: 'Servicio'
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            server_users: [...(prev.server_users || []), newUser]
+        }));
+    };
+
+    const handleDeleteUser = async (index, id) => {
+
+        if (id) {
+            await api.delete(`/server-users/${id}`);
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            server_users: prev.server_users.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleUserChange = (index, field, value) => {
+
+        setFormData(prev => {
+            const users = [...prev.server_users];
+
+            users[index] = {
+                ...users[index],
+                [field]: value
+            };
+
+            return {
+                ...prev,
+                server_users: users
+            };
+        });
+    };
+
+    const handleAddAccess = () => {
+        const newAccess = {
+            tempId: crypto.randomUUID(),
+            name: '',
+            access_ip: '',
+            port: '',
+            description: ''
+        };
+        setFormData(prev => ({
+            ...prev,
+            server_access: [...(prev.server_access || []), newAccess]
+        }));
+    };
+
+    const handleAccessChange = (index, field, value) => {
+        setFormData(prev => {
+            const access = [...prev.server_access];
+            access[index] = { ...access[index], [field]: value };
+            return { ...prev, server_access: access };
+        });
+    };
+
+    const handleDeleteAccess = async (index, id) => {
+        if (id) await api.delete(`/server-access/${id}`);
+        setFormData(prev => ({
+            ...prev,
+            server_access: prev.server_access.filter((_, i) => i !== index)
+        }));
     };
 
     const DataField = ({ label, name, value, icon: IconComponent, type = 'text', select = false, children }) => (
@@ -223,42 +424,53 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             border: '1px solid #e2e8f0',
                         }}
                     >
-                        <Stack spacing={0.5}>
+                        <Stack spacing={0.5} mb={3}>
                             <Typography variant="h6" fontWeight="bold">
                                 Métodos de Acceso
                             </Typography>
                             <Typography variant="caption" fontWeight="regular" color="grey" sx={{ letterSpacing: 1 }}>
                                 Formas de conectarse al servidor
                             </Typography>
+                            {isEditing && (
+                                <Box display="flex" justifyContent="flex-end" mt={2}>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        onClick={handleAddAccess}
+                                        sx={{ borderRadius: 1, textTransform: 'none' }}
+                                    >
+                                        + Nuevo Acceso
+                                    </Button>
+                                </Box>
+                            )}
                             {/* {isEditing && (
-                                <Button size="small" variant="contained" disableElevation sx={{ borderRadius: 2 }}>
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={handleAddAccess} 
+                                    sx={{ borderRadius: 1 }}
+                                >
                                     Nuevo Acceso
                                 </Button>
                             )} */}
                         </Stack>
                         {/* GRID DE ACCESOS */}
                         <Grid container spacing={2}>
-                            {formData.server_access && formData.server_access.length > 0 ? (
-                                formData.server_access.map((access, index) => (
-                                    <Grid item xs={12} md={6} key={index}>
-                                        <AccessCard item={access} />
-                                    </Grid>
-                                ))
-                            ) : (
-                                <Grid item xs={12}>
-                                    <Box sx={{
-                                        py: 4,
-                                        textAlign: 'center',
-                                        bgcolor: '#f8fafc',
-                                        borderRadius: 1,
-                                        border: '1px dashed #e2e8f0'
-                                    }}>
-                                        <Typography variant="body2" color="text.disabled">
-                                            No hay métodos de acceso configurados para este servidor.
-                                        </Typography>
-                                    </Box>
+                            {formData.server_access?.map((acc, index) => (
+                                <Grid item xs={12} key={acc.id ?? acc.tempId}>
+                                    {isEditing ? (
+                                        <Paper variant="outlined" sx={{ p: 2, display: 'flex', gap: 2, bgcolor: '#f8fafc', alignItems: 'center' }}>
+                                            <TextField label="Nombre" size="small" value={acc.name} onChange={(e) => handleAccessChange(index, 'name', e.target.value)} />
+                                            <TextField label="IP/Host" size="small" value={acc.access_ip} onChange={(e) => handleAccessChange(index, 'access_ip', e.target.value)} />
+                                            <TextField label="Puerto" size="small" sx={{ width: 100 }} value={acc.port} onChange={(e) => handleAccessChange(index, 'port', e.target.value)} />
+                                            <TextField label="Descripción" size="small" fullWidth value={acc.description} onChange={(e) => handleAccessChange(index, 'description', e.target.value)} />
+                                            <IconButton color="error" onClick={() => handleDeleteAccess(index, acc.id)}><Delete /></IconButton>
+                                        </Paper>
+                                    ) : (
+                                        <AccessCard item={acc} />
+                                    )}
                                 </Grid>
-                            )}
+                            ))}
                         </Grid>
                     </Box>
                 );
@@ -280,15 +492,17 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             <Typography variant="caption" fontWeight="regular" color="text.secondary">
                                 Cuentas configuradas en el servidor
                             </Typography>
-                            {isEditing && mode !== 'create' && (
-                                <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={handleAddUser}
-                                    sx={{ mt: 2 }}
-                                >
-                                    Agregar Usuario
-                                </Button>
+                            {isEditing && (
+                                <Box display="flex" justifyContent="flex-end" mt={2}>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        onClick={() => setOpenUserModal(true)}
+                                        sx={{ borderRadius: 1, textTransform: 'none' }}
+                                    >
+                                        + Nuevo Usuario
+                                    </Button>
+                                </Box>
                             )}
                         </Stack>
 
@@ -315,6 +529,9 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                         key={user.id ?? user.tempId}
                                         user={user}
                                         index={index}
+                                        isEditing={isEditing}
+                                        onUserChange={handleUserChange}
+                                        onDeleteUser={handleDeleteUser}
                                     />
                                 ))
                             ) : (
@@ -371,28 +588,43 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                 );
             case 4:
                 return (
-                    <>
-                        <Grid></Grid>
-                        <Box sx={{
-                            width: '100%',
-                            borderRadius: '12px',
-                            p: 3,
-                            bgcolor: '#fff',
-                            border: '1px solid #e2e8f0',
+                    <DeviceMaintenanceTab
+                        deviceId={formData.id}
+                        deviceType="App\Models\ServerDevice"
+                        maintenanceNotes={formData.maintenance_notes}
+                        options={options}
+                        isEditingServer={isEditing}
+                        onMaintenanceNotesChange={(newValue) => {
+                            setFormData(prev => ({
+                                ...prev,
+                                maintenance_notes: newValue
+                            }));
                         }}
-                        >
-                            <Stack spacing={0.5} mb={3}>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Registro de Actualizaciones
-                                </Typography>
-                                <Typography variant="caption" fontWeight="regular" color="grey" sx={{ letterSpacing: 1 }}>
-                                    0 actualizaciones registradas
-                                </Typography>
-                            </Stack>
-
-                        </Box>
-                    </>
+                    />
                 );
+            // return (
+            //     <>
+            //         <Grid></Grid>
+            //         <Box sx={{
+            //             width: '100%',
+            //             borderRadius: '12px',
+            //             p: 3,
+            //             bgcolor: '#fff',
+            //             border: '1px solid #e2e8f0',
+            //         }}
+            //         >
+            //             <Stack spacing={0.5} mb={3}>
+            //                 <Typography variant="h6" fontWeight="bold">
+            //                     Registro de Actualizaciones
+            //                 </Typography>
+            //                 <Typography variant="caption" fontWeight="regular" color="grey" sx={{ letterSpacing: 1 }}>
+            //                     0 actualizaciones registradas
+            //                 </Typography>
+            //             </Stack>
+
+            //         </Box>
+            //     </>
+            // );
             default:
                 return null;
         }
@@ -511,141 +743,6 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                 )}
             </Paper>
         );
-    };
-
-    const UserRow = ({ user, index }) => {
-        const typeStyles = {
-            'Administrador': { bgcolor: '#fee2e2', color: '#ef4444', label: 'Administrador' },
-            'Servicio': { bgcolor: '#eff6ff', color: '#3b82f6', label: 'Servicio' }
-        };
-
-        const style = typeStyles[user.type] || {
-            bgcolor: '#f1f5f9',
-            color: '#64748b',
-            label: user.type
-        };
-        if (isEditing) {
-            return (
-                <Box
-                    sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1.5fr 1fr 2fr 48px',
-                        gap: 1,
-                        py: 1
-                    }}
-                >
-
-                    <TextField
-                        size="small"
-                        value={user.name}
-                        onChange={(e) => handleUserChange(index, 'name', e.target.value)}
-                    />
-
-                    <TextField
-                        select
-                        size="small"
-                        value={user.type}
-                        onChange={(e) => handleUserChange(index, 'type', e.target.value)}
-                    >
-                        <MenuItem value="Administrador">Administrador</MenuItem>
-                        <MenuItem value="Servicio">Servicio</MenuItem>
-                    </TextField>
-
-                    <TextField
-                        size="small"
-                        value={user.description}
-                        onChange={(e) => handleUserChange(index, 'description', e.target.value)}
-                    />
-
-                    <IconButton
-                        color="error"
-                        onClick={() => handleDeleteUser(index, user.id)}
-                    >
-                        <Delete />
-                    </IconButton>
-
-                </Box>
-            );
-        }
-
-        return (
-            <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: '1.5fr 1fr 2fr 48px',
-                alignItems: 'center',
-                py: 2,
-                px: 1,
-                borderBottom: '1px solid #f1f5f9',
-                '&:hover': { bgcolor: '#fafafa' }
-            }}>
-                <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
-                    {user.name}
-                </Typography>
-
-                <Box>
-                    <Chip
-                        label={style.label}
-                        size="small"
-                        sx={{
-                            bgcolor: style.bgcolor,
-                            color: style.color,
-                            fontWeight: 'bold',
-                            fontSize: '0.7rem',
-                            height: 20
-                        }}
-                    />
-                </Box>
-
-                <Typography variant="body2" color="text.secondary">
-                    {user.description || '—'}
-                </Typography>
-
-            </Box>
-        );
-    };
-
-    const handleAddUser = () => {
-        const newUser = {
-            tempId: crypto.randomUUID(),
-            name: '',
-            password: '',
-            description: '',
-            type: 'Servicio'
-        };
-
-        setFormData(prev => ({
-            ...prev,
-            server_users: [...(prev.server_users || []), newUser]
-        }));
-    };
-
-    const handleDeleteUser = async (index, id) => {
-
-        if (id) {
-            await api.delete(`/server-users/${id}`);
-        }
-
-        setFormData(prev => ({
-            ...prev,
-            server_users: prev.server_users.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleUserChange = (index, field, value) => {
-
-        setFormData(prev => {
-            const users = [...prev.server_users];
-
-            users[index] = {
-                ...users[index],
-                [field]: value
-            };
-
-            return {
-                ...prev,
-                server_users: users
-            };
-        });
     };
 
     return (
@@ -835,6 +932,56 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
             <Box sx={{ width: '100%' }}>
                 {renderTabContent()}
             </Box>
+            <Dialog open={openUserModal} onClose={() => setOpenUserModal(false)} fullWidth maxWidth="xs">
+                <DialogTitle sx={{ fontWeight: 'bold' }}>Nuevo Usuario</DialogTitle>
+                <DialogContent dividers>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        <TextField
+                            label="Usuario"
+                            fullWidth
+                            size="small"
+                            value={newUser.name}
+                            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                        />
+                        <TextField
+                            label="Contraseña"
+                            fullWidth
+                            size="small"
+                            type="password"
+                            value={newUser.password}
+                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                        />
+                        <TextField
+                            label="Tipo"
+                            select
+                            fullWidth
+                            size="small"
+                            value={newUser.type}
+                            onChange={(e) => setNewUser({ ...newUser, type: e.target.value })}
+                        >
+                            <MenuItem value="Administrador">Administrador</MenuItem>
+                            <MenuItem value="Servicio">Servicio</MenuItem>
+                        </TextField>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setOpenUserModal(false)}>Cancelar</Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            const userToAdd = { ...newUser, tempId: crypto.randomUUID() };
+                            setFormData(prev => ({
+                                ...prev,
+                                server_users: [...(prev.server_users || []), userToAdd]
+                            }));
+                            setOpenUserModal(false);
+                            setNewUser({ name: '', password: '', description: '', type: 'Servicio' });
+                        }}
+                    >
+                        Agregar
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box >
     );
 }
