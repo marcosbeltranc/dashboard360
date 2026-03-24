@@ -1,15 +1,21 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useRouter } from 'next/navigation';
 import {
     Box, Grid, Typography, Card, CardContent, TextField, Button,
-    Chip, Divider, Stack, IconButton, MenuItem, Paper, Avatar, Autocomplete
+    Chip, Divider, Stack, IconButton, MenuItem, Paper, Avatar, Autocomplete,
+    Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
 import {
     Edit, Save, Dns, Person, Settings, ArrowBack,
     Storage, Terminal, Language, Code,
     Description, Business, Notes, Lan, Update
 } from '@mui/icons-material';
+
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import RichTextEditor from '@/components/RichTextEditor';
+import SystemFilesManager from '@/components/SystemFilesManager';
 
 export default function SystemFormView({
     mode = 'view',
@@ -22,6 +28,7 @@ export default function SystemFormView({
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(mode === 'create' || mode === 'edit');
     const [formData, setFormData] = useState(initialData || {});
+    const [faqSearch, setFaqSearch] = useState('');
 
     useEffect(() => {
         if (initialData) {
@@ -110,6 +117,23 @@ export default function SystemFormView({
         s => s.id === formData.server_device_id
     );
     console.log(selectedServer);
+    const filteredFaqs = (formData.faqs || []).filter(faq => {
+        const search = faqSearch.toLowerCase();
+
+        const questionMatch = faq.question?.toLowerCase().includes(search);
+
+        const answerMatch = faq.answer
+            ?.replace(/<[^>]+>/g, '')
+            .toLowerCase()
+            .includes(search);
+
+        const tagsMatch = (faq.tags || []).some(tag =>
+            tag.toLowerCase().includes(search)
+        );
+
+        return questionMatch || answerMatch || tagsMatch;
+    });
+
     return (
         <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
             {/* HEADER */}
@@ -259,44 +283,6 @@ export default function SystemFormView({
                     </Card>
                 ))}
             </Stack>
-            {/* <Stack
-                direction="row"
-                spacing={3}
-                mb={4}
-                sx={{ width: '100%', alignItems: 'stretch' }}
-            >
-                {[
-                    { label: "Servidor", name: "server_device_id", value: formData.server_device_id, select: true, icon: Dns, options: servers },
-                    { label: "Criticidad", name: "priority_id", value: formData.priority_id, select: true, icon: Settings, options: options?.priorities },
-                    { label: "Responsable", name: "responsible_id", value: formData.responsible_id, select: true, icon: Person, options: users },
-                    { label: "Últ. Actualización", name: "last_update", value: formData.last_update, type: "date", icon: Update }
-                ].map((item, i) => (
-                    <Card
-                        key={i}
-                        variant="outlined"
-                        sx={{
-                            flex: 1,
-                            borderRadius: 3,
-                            border: '1px solid #e2e8f0',
-                            bgcolor: '#fff',
-                            boxShadow: 'none',
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}
-                    >
-                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, flexGrow: 1 }}>
-                            <DataField
-                                label={item.label}
-                                name={item.name}
-                                value={item.value}
-                                type={item.type}
-                                select={item.select}
-                                optionsArray={item.options}
-                            />
-                        </CardContent>
-                    </Card>
-                ))}
-            </Stack> */}
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ width: '100%', alignItems: 'stretch', mb: 4 }}>
                 <Paper
@@ -370,13 +356,17 @@ export default function SystemFormView({
                                 }))
                             }
                             renderTags={(value, getTagProps) =>
-                                value.map((option, index) => (
-                                    <Chip
-                                        label={option}
-                                        {...getTagProps({ index })}
-                                        sx={{ mb: 0.5 }}
-                                    />
-                                ))
+                                value.map((option, i) => {
+                                    const { key, ...tagProps } = getTagProps({ index: i });
+
+                                    return (
+                                        <Chip
+                                            key={key}
+                                            label={option}
+                                            {...tagProps}
+                                        />
+                                    );
+                                })
                             }
                             renderInput={(params) => (
                                 <TextField
@@ -457,6 +447,143 @@ export default function SystemFormView({
                 </Paper>
             </Stack>
 
+            <Divider sx={{ mb: 4 }} />
+
+            <Paper
+                variant="outlined"
+                sx={{
+                    borderRadius: 1,
+                    p: 3,
+                    bgcolor: '#fff',
+                    mb: 4
+                }}
+            >
+                <Typography variant="h6" fontWeight="bold" mb={3}>
+                    Preguntas Frecuentes
+                </Typography>
+
+                <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Buscar en FAQs..."
+                    value={faqSearch}
+                    onChange={(e) => setFaqSearch(e.target.value)}
+                    sx={{ mb: 2 }}
+                />
+
+                {filteredFaqs.map((faq, index) => (
+                    <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid #e2e8f0', borderRadius: 1 }}>
+
+                        {isEditing ? (
+                            <>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Pregunta"
+                                    value={faq.question || ''}
+                                    onChange={(e) => {
+                                        const newFaqs = [...formData.faqs];
+                                        newFaqs[index].question = e.target.value;
+                                        setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                    }}
+                                    sx={{ mb: 2 }}
+                                />
+
+                                <RichTextEditor
+                                    value={faq.answer}
+                                    onChange={(html) => {
+                                        const newFaqs = [...formData.faqs];
+                                        newFaqs[index].answer = html;
+                                        setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                    }}
+                                />
+
+                                {/* TAGS */}
+                                <Autocomplete
+                                    multiple
+                                    freeSolo
+                                    options={[]}
+                                    value={faq.tags || []}
+                                    onChange={(e, newValue) => {
+                                        const newFaqs = [...formData.faqs];
+                                        newFaqs[index].tags = newValue;
+                                        setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                    }}
+                                    renderTags={(value, getTagProps) =>
+                                        value.map((option, i) => {
+                                            const { key, ...tagProps } = getTagProps({ index: i });
+
+                                            return (
+                                                <Chip
+                                                    key={key}
+                                                    label={option}
+                                                    {...tagProps}
+                                                />
+                                            );
+                                        })
+                                    }
+                                    renderInput={(params) => (
+                                        <TextField {...params} size="small" placeholder="Tags" />
+                                    )}
+                                />
+
+                                <Button
+                                    color="error"
+                                    size="small"
+                                    sx={{ mt: 1 }}
+                                    onClick={() => {
+                                        const newFaqs = formData.faqs.filter((_, i) => i !== index);
+                                        setFormData(prev => ({ ...prev, faqs: newFaqs }));
+                                    }}
+                                >
+                                    Eliminar
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Accordion sx={{ mb: 1, boxShadow: 'none', border: '1px solid #e2e8f0' }}>
+                                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                        <Typography fontWeight="bold">
+                                            {faq.question}
+                                        </Typography>
+                                    </AccordionSummary>
+
+                                    <AccordionDetails>
+                                        <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
+
+                                        <Stack direction="row" spacing={1} mt={2}>
+                                            {(faq.tags || []).map((tag, i) => (
+                                                <Chip key={i} label={tag} size="small" />
+                                            ))}
+                                        </Stack>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </>
+                        )}
+                    </Box>
+                ))}
+
+                {isEditing && (
+                    <Button
+                        variant="outlined"
+                        onClick={() =>
+                            setFormData(prev => ({
+                                ...prev,
+                                faqs: [...(prev.faqs || []), { question: '', answer: '', tags: [] }]
+                            }))
+                        }
+                    >
+                        + Agregar FAQ
+                    </Button>
+                )}
+            </Paper>
+
+            <Divider sx={{ mb: 4 }} />
+
+            <SystemFilesManager
+                systemId={formData.id}
+                isEditing={isEditing}
+            />
         </Box>
     );
 }

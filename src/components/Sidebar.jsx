@@ -26,11 +26,10 @@ const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon fontSize="small" />, path: '/home' },
     { text: 'Administracion', icon: <AdminIcon fontSize='small' />, path: '/administracion' },
     { text: 'Sistemas', icon: <DnsIcon fontSize="small" />, path: '/sistemas' },
-    { text: 'Base de Conocimientos', icon: <BookIcon fontSize="small" />, path: '/conocimiento' },
     { text: 'Infraestructura', icon: <RouterIcon fontSize="small" />, path: '/infraestructura' },
     { text: 'Activos', icon: <InventoryIcon fontSize="small" />, path: '/activos' },
     { text: 'Usuarios', icon: <PeopleIcon fontSize="small" />, path: '/usuarios' },
-    { text: 'Roles', icon: <ShieldIcon fontSize="small" />, path: '/roles' },
+    // { text: 'Roles', icon: <ShieldIcon fontSize="small" />, path: '/roles' },
 ];
 
 export default function Sidebar() {

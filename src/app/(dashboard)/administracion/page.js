@@ -44,7 +44,7 @@ export default function Sistemas() {
     const fetchGroups = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/option_groups');
+            const response = await api.get('/option-groups');
             setGroups(response.data.data);
         } catch (error) {
             console.error("Error al cargar grupos:", error);
@@ -57,7 +57,7 @@ export default function Sistemas() {
     const handleSaveGroup = async () => {
         if (!newGroup.name || !newGroup.code) return;
         try {
-            await api.post('/option_groups', { ...newGroup, is_active: true });
+            await api.post('/option-groups', { ...newGroup, is_active: true });
             await fetchGroups();
             setOpenGroupModal(false);
             setNewGroup({ name: '', code: '', description: '' });
@@ -77,7 +77,7 @@ export default function Sistemas() {
     const handleSaveEditGroup = async () => {
         if (!editGroupForm.name || !editingGroup) return;
         try {
-            await api.put(`/option_groups/${editingGroup.id}`, editGroupForm);
+            await api.put(`/option-groups/${editingGroup.id}`, editGroupForm);
             if (selectedGroup?.id === editingGroup.id) {
                 setSelectedGroup(prev => ({ ...prev, ...editGroupForm }));
             }
