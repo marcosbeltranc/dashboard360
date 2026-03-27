@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-
+import { usePermissions } from '@/hooks/usePermissions';
 import {
     Box, Typography, CircularProgress, Stack, TextField,
     InputAdornment, Grid, Card, CardContent, Button, MenuItem, Chip, Tooltip
@@ -15,7 +15,7 @@ import {
 
 export default function SistemasGestion() {
     const router = useRouter();
-
+    const { can, isLoaded } = usePermissions();
     // Estados de Datos
     const [systems, setSystems] = useState([]);
     const [servers, setServers] = useState([]);
@@ -109,6 +109,16 @@ export default function SistemasGestion() {
         }
     };
 
+    if (!isLoaded) return null;
+
+    if (!can('systems', 'view_menu')) {
+        return (
+            <Box p={4}>
+                <Typography>No tienes acceso a Sistemas</Typography>
+            </Box>
+        );
+    }
+
     if (loading) return <Box display="flex" justifyContent="center" mt={10}><CircularProgress /></Box>;
 
     return (
@@ -119,14 +129,16 @@ export default function SistemasGestion() {
                     <Typography variant="h4" fontWeight="bold" color="#1e293b">Sistemas</Typography>
                     <Typography color="text.secondary">Inventario de aplicaciones y servicios críticos</Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => router.push('/sistemas/new')} // Cambiado de setOpenModal
-                    sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
-                >
-                    Nuevo Sistema
-                </Button>
+                {can('systems', 'create') && (
+                    <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => router.push('/sistemas/new')} // Cambiado de setOpenModal
+                        sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
+                    >
+                        Nuevo Sistema
+                    </Button>
+                )}
             </Box>
 
             {/* Filtros */}
@@ -176,8 +188,14 @@ export default function SistemasGestion() {
                                                 <Typography
                                                     variant="subtitle1"
                                                     fontWeight="bold"
-                                                    sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
-                                                    onClick={() => router.push(`/sistemas/${sys.id}`)} // Cambiado de setSelectedSystem
+                                                    sx={{
+                                                        cursor: can('systems_detail', 'view') ? 'pointer' : 'default',
+                                                        '&:hover': can('systems_detail', 'view') ? { color: 'primary.main' } : {}
+                                                    }}
+                                                    onClick={() => {
+                                                        if (!can('systems_detail', 'view')) return;
+                                                        router.push(`/sistemas/${sys.id}`);
+                                                    }}
                                                 >
                                                     {sys.name}
                                                 </Typography>

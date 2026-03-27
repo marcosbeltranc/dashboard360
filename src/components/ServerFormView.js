@@ -6,13 +6,14 @@ import {
     Chip, Divider, Stack, IconButton, MenuItem, Paper, Tab, Tabs, Avatar, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import {
-    Edit, Save, Dns, Place, Event, Person, Settings, ArrowBack, Memory, Lock, SettingsInputComponent, Storage, Terminal, ContentCopy, AccountTree, Assignment, Delete
+    Edit, Save, Dns, Place, Event, Person, Settings, ArrowBack, Memory, Lock, SettingsInputComponent, Storage, Terminal, ContentCopy, AccountTree, Assignment, Delete, Visibility, VisibilityOff
 } from '@mui/icons-material';
 import api from '@/lib/api';
 import toast from "react-hot-toast";
 import DeviceMaintenanceTab from './DeviceMaintenanceTab';
+import { usePermissions } from '@/hooks/usePermissions';
 
-const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
+const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser, canEdit, canDelete, showPasswords, togglePassword }) => {
     const typeStyles = {
         'Administrador': { bgcolor: '#fee2e2', color: '#ef4444', label: 'Administrador' },
         'Servicio': { bgcolor: '#eff6ff', color: '#3b82f6', label: 'Servicio' }
@@ -24,7 +25,7 @@ const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
         label: user.type
     };
 
-    if (isEditing) {
+    if (isEditing && canEdit) {
         return (
             <Box
                 sx={{
@@ -39,6 +40,22 @@ const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
                     value={user.name || ''}
                     onChange={(e) => onUserChange(index, 'name', e.target.value)}
                 />
+
+                {user.password && (
+                    <TextField
+                        size="small"
+                        type={showPasswords[`user-${index}`] ? 'text' : 'password'}
+                        value={user.password || ''}
+                        onChange={(e) => onUserChange(index, 'password', e.target.value)}
+                        InputProps={{
+                            endAdornment: (
+                                <IconButton onClick={() => togglePassword(`user-${index}`)}>
+                                    {showPasswords[`user-${index}`] ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            )
+                        }}
+                    />
+                )}
 
                 <TextField
                     select
@@ -55,13 +72,14 @@ const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
                     value={user.description || ''}
                     onChange={(e) => onUserChange(index, 'description', e.target.value)}
                 />
-
-                <IconButton
-                    color="error"
-                    onClick={() => onDeleteUser(index, user.id)}
-                >
-                    <Delete />
-                </IconButton>
+                {canDelete && (
+                    <IconButton
+                        color="error"
+                        onClick={() => onDeleteUser(index, user.id)}
+                    >
+                        <Delete />
+                    </IconButton>
+                )}
             </Box>
         );
     }
@@ -80,6 +98,19 @@ const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
                 {user.name}
             </Typography>
 
+            {user.password && (
+                <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                    {showPasswords[`user-${index}`]
+                        ? user.password
+                        : '••••••••'}
+                    <IconButton
+                        size="small"
+                        onClick={() => togglePassword(`user-${index}`)}
+                    >
+                        {showPasswords[`user-${index}`] ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                </Typography>
+            )}
             <Box>
                 <Chip
                     label={style.label}
@@ -102,10 +133,35 @@ const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser }) => {
 };
 
 export default function ServerFormView({ mode = 'view', initialData, options, onSave }) {
+    const { can, isLoaded } = usePermissions();
+
+    const canView = can('server', 'view');
+    const canEdit = can('server', 'edit');
+    const canRequest = can('server', 'access');
+
+    const canAccess = {
+        view: can('server_access', 'view'),
+        create: can('server_access', 'create'),
+        edit: can('server_access', 'edit'),
+        delete: can('server_access', 'delete'),
+    };
+
+    const canUsers = {
+        view: can('server_users', 'view'),
+        create: can('server_users', 'create'),
+        edit: can('server_users', 'edit'),
+        delete: can('server_users', 'delete'),
+    };
+
+    const canUpdates = {
+        view: can('server_updates', 'view'),
+    };
     const router = useRouter();
-    const [isEditing, setIsEditing] = useState(mode === 'create' || mode === 'edit');
+    const [isEditing, setIsEditing] = useState(
+        canEdit && (mode === 'create' || mode === 'edit')
+    );
     const [formData, setFormData] = useState(initialData || {});
-    const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState('specs');
     const [openUserModal, setOpenUserModal] = useState(false);
 
     const [newUser, setNewUser] = useState({
@@ -113,6 +169,14 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         password: '',
         description: '',
         type: 'Servicio'
+    });
+
+    const [openAccessModal, setOpenAccessModal] = useState(false);
+
+    const [accessForm, setAccessForm] = useState({
+        reason: '',
+        start_at: '',
+        end_at: ''
     });
 
     useEffect(() => {
@@ -142,6 +206,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
     };
 
     const handleSave = async () => {
+        if (!canEdit) return;
         const server = await onSave(formData);
         const serverId = server?.id || formData.id;
         let flag = false;
@@ -210,7 +275,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
     };
 
     const handleDeleteUser = async (index, id) => {
-
+        if (!canUsers.delete) return;
         if (id) {
             await api.delete(`/server-users/${id}`);
         }
@@ -261,6 +326,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
     };
 
     const handleDeleteAccess = async (index, id) => {
+        if (!canAccess.delete) return;
         if (id) await api.delete(`/server-access/${id}`);
         setFormData(prev => ({
             ...prev,
@@ -311,9 +377,11 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         </Box>
     );
 
+    const hasPasswords = formData.server_users?.some(u => u.password);
+
     const renderTabContent = () => {
         switch (activeTab) {
-            case 0:
+            case 'specs':
                 return (
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ width: '100%', alignItems: 'stretch', mb: 4 }}>
                         <Paper
@@ -412,7 +480,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         </Paper>
                     </Stack>
                 );
-            case 1:
+            case 'access':
                 return (
 
                     <Box
@@ -431,7 +499,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             <Typography variant="caption" fontWeight="regular" color="grey" sx={{ letterSpacing: 1 }}>
                                 Formas de conectarse al servidor
                             </Typography>
-                            {isEditing && (
+                            {isEditing && canAccess.create && (
                                 <Box display="flex" justifyContent="flex-end" mt={2}>
                                     <Button
                                         size="small"
@@ -443,38 +511,49 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                     </Button>
                                 </Box>
                             )}
-                            {/* {isEditing && (
-                                <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={handleAddAccess} 
-                                    sx={{ borderRadius: 1 }}
-                                >
-                                    Nuevo Acceso
-                                </Button>
-                            )} */}
                         </Stack>
                         {/* GRID DE ACCESOS */}
                         <Grid container spacing={2}>
                             {formData.server_access?.map((acc, index) => (
                                 <Grid item xs={12} key={acc.id ?? acc.tempId}>
-                                    {isEditing ? (
+                                    {isEditing && canAccess.edit ? (
                                         <Paper variant="outlined" sx={{ p: 2, display: 'flex', gap: 2, bgcolor: '#f8fafc', alignItems: 'center' }}>
                                             <TextField label="Nombre" size="small" value={acc.name} onChange={(e) => handleAccessChange(index, 'name', e.target.value)} />
+                                            {acc.password !== undefined && (
+                                                <TextField
+                                                    label="Password"
+                                                    size="small"
+                                                    type={showPasswords[`access-${index}`] ? 'text' : 'password'}
+                                                    value={acc.password || ''}
+                                                    onChange={(e) => handleAccessChange(index, 'password', e.target.value)}
+                                                    InputProps={{
+                                                        endAdornment: (
+                                                            <IconButton onClick={() => togglePassword(`access-${index}`)}>
+                                                                {showPasswords[`access-${index}`] ? <VisibilityOff /> : <Visibility />}
+                                                            </IconButton>
+                                                        )
+                                                    }}
+                                                />
+                                            )}
                                             <TextField label="IP/Host" size="small" value={acc.access_ip} onChange={(e) => handleAccessChange(index, 'access_ip', e.target.value)} />
                                             <TextField label="Puerto" size="small" sx={{ width: 100 }} value={acc.port} onChange={(e) => handleAccessChange(index, 'port', e.target.value)} />
                                             <TextField label="Descripción" size="small" fullWidth value={acc.description} onChange={(e) => handleAccessChange(index, 'description', e.target.value)} />
                                             <IconButton color="error" onClick={() => handleDeleteAccess(index, acc.id)}><Delete /></IconButton>
                                         </Paper>
                                     ) : (
-                                        <AccessCard item={acc} />
+                                        <AccessCard
+                                            item={acc}
+                                            index={index}
+                                            showPasswords={showPasswords}
+                                            togglePassword={togglePassword}
+                                        />
                                     )}
                                 </Grid>
                             ))}
                         </Grid>
                     </Box>
                 );
-            case 2:
+            case 'users':
                 return (
                     <Box
                         sx={{
@@ -492,7 +571,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             <Typography variant="caption" fontWeight="regular" color="text.secondary">
                                 Cuentas configuradas en el servidor
                             </Typography>
-                            {isEditing && (
+                            {isEditing && canUsers.create && (
                                 <Box display="flex" justifyContent="flex-end" mt={2}>
                                     <Button
                                         size="small"
@@ -514,7 +593,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                             pb: 1,
                             borderBottom: '2px solid #f1f5f9'
                         }}>
-                            {['Usuario', 'Tipo', 'Descripción', ''].map((head) => (
+                            {['Usuario', ...(hasPasswords ? ['Contraseña'] : []), 'Tipo', 'Descripción', ''].map((head) => (
                                 <Typography key={head} variant="caption" fontWeight="bold" color="text.disabled">
                                     {head}
                                 </Typography>
@@ -532,6 +611,10 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                         isEditing={isEditing}
                                         onUserChange={handleUserChange}
                                         onDeleteUser={handleDeleteUser}
+                                        canEdit={canUsers.edit}
+                                        canDelete={canUsers.delete}
+                                        showPasswords={showPasswords}
+                                        togglePassword={togglePassword}
                                     />
                                 ))
                             ) : (
@@ -544,7 +627,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         </Box>
                     </Box>
                 );
-            case 3:
+            case 'systems':
                 return (
 
                     <Box
@@ -586,7 +669,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         </Grid>
                     </Box>
                 );
-            case 4:
+            case 'updates':
                 return (
                     <DeviceMaintenanceTab
                         deviceId={formData.id}
@@ -602,35 +685,12 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         }}
                     />
                 );
-            // return (
-            //     <>
-            //         <Grid></Grid>
-            //         <Box sx={{
-            //             width: '100%',
-            //             borderRadius: '12px',
-            //             p: 3,
-            //             bgcolor: '#fff',
-            //             border: '1px solid #e2e8f0',
-            //         }}
-            //         >
-            //             <Stack spacing={0.5} mb={3}>
-            //                 <Typography variant="h6" fontWeight="bold">
-            //                     Registro de Actualizaciones
-            //                 </Typography>
-            //                 <Typography variant="caption" fontWeight="regular" color="grey" sx={{ letterSpacing: 1 }}>
-            //                     0 actualizaciones registradas
-            //                 </Typography>
-            //             </Stack>
-
-            //         </Box>
-            //     </>
-            // );
             default:
                 return null;
         }
     };
 
-    const AccessCard = ({ item }) => {
+    const AccessCard = ({ item, index, showPasswords, togglePassword }) => {
         const handleCopy = (text) => {
             if (text) navigator.clipboard.writeText(text);
         };
@@ -668,6 +728,29 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                     {item.description && (
                         <Typography variant="caption" color="text.disabled" display="block">
                             {item.description}
+                        </Typography>
+                    )}
+                    {item.password && (
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                fontFamily: 'monospace',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                mt: 0.5
+                            }}
+                        >
+                            {showPasswords[`access-${index}`]
+                                ? item.password
+                                : '••••••••'}
+
+                            <IconButton
+                                size="small"
+                                onClick={() => togglePassword(`access-${index}`)}
+                            >
+                                {showPasswords[`access-${index}`] ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
                         </Typography>
                     )}
                 </Box>
@@ -745,6 +828,69 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         );
     };
 
+    const handleRequestAccess = async () => {
+        try {
+            await api.post(`/servers/${formData.id}/access-request`, {
+                reason: accessForm.reason,
+                start_at: accessForm.start_at,
+                end_at: accessForm.end_at || null
+            });
+
+            toast.success('Solicitud enviada correctamente');
+
+            setOpenAccessModal(false);
+            setAccessForm({
+                reason: '',
+                start_at: '',
+                end_at: ''
+            });
+
+        } catch (error) {
+            console.error(error);
+
+            const message =
+                error?.response?.data?.message ||
+                'Error al solicitar acceso';
+
+            toast.error(message);
+        }
+    };
+
+    const tabs = [
+        { key: 'specs', label: 'Especificaciones', icon: <Settings fontSize="small" />, visible: true },
+        { key: 'access', label: 'Accesos', icon: <Lock fontSize="small" />, visible: canAccess.view },
+        { key: 'users', label: 'Usuarios Windows', icon: <Person fontSize="small" />, visible: canUsers.view },
+        { key: 'systems', label: 'Sistemas', icon: <Dns fontSize="small" />, visible: true },
+        { key: 'updates', label: 'Actualizaciones', icon: <Assignment fontSize="small" />, visible: canUpdates.view },
+    ];
+
+    const visibleTabs = tabs.filter(t => t.visible);
+
+    useEffect(() => {
+        if (!visibleTabs.find(t => t.key === activeTab)) {
+            setActiveTab(visibleTabs[0]?.key);
+        }
+    }, [visibleTabs]);
+
+    const [showPasswords, setShowPasswords] = useState({});
+
+    const togglePassword = (key) => {
+        setShowPasswords(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
+
+    if (!isLoaded) return null;
+
+    if (!canView) {
+        return (
+            <Box p={4}>
+                <Typography>No tienes acceso a este servidor</Typography>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
             {/* Header / Top Bar */}
@@ -805,19 +951,38 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
 
                 <Stack direction="row" spacing={2}>
                     {!isEditing ? (
-                        <Button
-                            variant="contained"
-                            startIcon={<Edit />}
-                            onClick={() => setIsEditing(true)}
-                            sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
-                        >
-                            Editar Equipo
-                        </Button>
+                        <>
+                            {canEdit && (
+                                <Button
+                                    variant="contained"
+                                    startIcon={<Edit />}
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    Editar Equipo
+                                </Button>
+                            )}
+
+                            {canRequest && (
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    onClick={() => setOpenAccessModal(true)}
+                                >
+                                    Solicitar acceso
+                                </Button>
+                            )}
+                        </>
                     ) : (
                         <>
-                            <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#fff' }}>
+                            <Button
+                                variant="outlined"
+                                color="inherit"
+                                onClick={handleCancel}
+                                sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#fff' }}
+                            >
                                 Cancelar
                             </Button>
+
                             <Button
                                 variant="contained"
                                 startIcon={<Save />}
@@ -918,13 +1083,16 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                 <Tabs
                     value={activeTab}
                     onChange={(e, v) => setActiveTab(v)}
-                    sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 'bold', minWidth: 120 } }}
                 >
-                    <Tab icon={<Settings fontSize="small" />} iconPosition="start" label="Especificaciones" />
-                    <Tab icon={<Lock fontSize="small" />} iconPosition="start" label="Accesos" />
-                    <Tab icon={<Person fontSize="small" />} iconPosition="start" label="Usuarios Windows" />
-                    <Tab icon={<Dns fontSize="small" />} iconPosition="start" label="Sistemas" />
-                    <Tab icon={<Assignment fontSize="small" />} iconPosition="start" label="Actualizaciones" />
+                    {visibleTabs.map(tab => (
+                        <Tab
+                            key={tab.key}
+                            value={tab.key}
+                            label={tab.label}
+                            icon={tab.icon}
+                            iconPosition="start"
+                        />
+                    ))}
                 </Tabs>
             </Box>
 
@@ -979,6 +1147,64 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         }}
                     >
                         Agregar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={openAccessModal} onClose={() => setOpenAccessModal(false)} fullWidth maxWidth="sm">
+                <DialogTitle sx={{ fontWeight: 'bold' }}>
+                    Solicitar acceso al servidor
+                </DialogTitle>
+
+                <DialogContent dividers>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+
+                        <TextField
+                            label="Motivo"
+                            multiline
+                            rows={3}
+                            fullWidth
+                            value={accessForm.reason}
+                            onChange={(e) =>
+                                setAccessForm(prev => ({ ...prev, reason: e.target.value }))
+                            }
+                        />
+
+                        <TextField
+                            label="Fecha inicio"
+                            type="datetime-local"
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                            value={accessForm.start_at}
+                            onChange={(e) =>
+                                setAccessForm(prev => ({ ...prev, start_at: e.target.value }))
+                            }
+                        />
+
+                        <TextField
+                            label="Fecha fin (opcional)"
+                            type="datetime-local"
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                            value={accessForm.end_at}
+                            onChange={(e) =>
+                                setAccessForm(prev => ({ ...prev, end_at: e.target.value }))
+                            }
+                        />
+
+                    </Stack>
+                </DialogContent>
+
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setOpenAccessModal(false)}>
+                        Cancelar
+                    </Button>
+
+                    <Button
+                        variant="contained"
+                        onClick={handleRequestAccess}
+                        disabled={!accessForm.reason || !accessForm.start_at}
+                    >
+                        Enviar solicitud
                     </Button>
                 </DialogActions>
             </Dialog>

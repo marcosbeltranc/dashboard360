@@ -16,6 +16,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RichTextEditor from '@/components/RichTextEditor';
 import SystemFilesManager from '@/components/SystemFilesManager';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function SystemFormView({
     mode = 'view',
@@ -25,6 +26,7 @@ export default function SystemFormView({
     users = [],
     onSave
 }) {
+    const { can, isLoaded } = usePermissions();
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(mode === 'create' || mode === 'edit');
     const [formData, setFormData] = useState(initialData || {});
@@ -213,12 +215,14 @@ export default function SystemFormView({
                 </Box>
                 <Stack direction="row" spacing={2}>
                     {!isEditing ? (
-                        <Button
-                            variant="contained"
-                            startIcon={<Edit />}
-                            onClick={() => setIsEditing(true)}
-                            sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
-                        >Editar</Button>
+                        can('systems_detail', 'edit') && (
+                            <Button
+                                variant="contained"
+                                startIcon={<Edit />}
+                                onClick={() => setIsEditing(true)}
+                                sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
+                            >Editar</Button>
+                        )
                     ) : (
                         <>
                             <Button variant="outlined" color="inherit" onClick={handleCancel} sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#fff' }}>

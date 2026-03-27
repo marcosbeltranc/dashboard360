@@ -18,10 +18,13 @@ import {
     Settings
 } from '@mui/icons-material';
 import api from '@/lib/api';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
-export default function Sistemas() {
+export default function Administracion() {
+    const { can, isLoaded } = usePermissions();
+
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -55,6 +58,7 @@ export default function Sistemas() {
 
     // Grupos
     const handleSaveGroup = async () => {
+        if (!can('admin_groups', 'create')) return;
         if (!newGroup.name || !newGroup.code) return;
         try {
             await api.post('/option-groups', { ...newGroup, is_active: true });
@@ -75,6 +79,7 @@ export default function Sistemas() {
     };
 
     const handleSaveEditGroup = async () => {
+        if (!can('admin_groups', 'edit')) return;
         if (!editGroupForm.name || !editingGroup) return;
         try {
             await api.put(`/option-groups/${editingGroup.id}`, editGroupForm);
@@ -109,6 +114,7 @@ export default function Sistemas() {
     };
 
     const handleDeleteOption = async (optionId) => {
+        if (!can('admin_group_options', 'delete')) return;
         try {
             await api.delete(`/options/${optionId}`);
             await fetchGroups();
@@ -120,6 +126,7 @@ export default function Sistemas() {
     };
 
     const handleSaveOption = async () => {
+        if (!can('admin_group_options', editingOption ? 'edit' : 'create')) return;
         if (!formOption.name || !selectedGroup) return;
 
         try {
@@ -158,6 +165,12 @@ export default function Sistemas() {
         }
     };
 
+    if (!isLoaded) return null;
+
+    if (!can('admin', 'view_menu')) {
+        return <Typography p={4}>No tienes acceso</Typography>;
+    }
+
     if (loading && groups.length === 0) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -176,9 +189,11 @@ export default function Sistemas() {
                     </Typography>
                     <Typography color="text.secondary">Gestiona las categorías y listas de valores del sistema</Typography>
                 </Box>
-                <Button variant="contained" startIcon={<Add />} onClick={() => setOpenGroupModal(true)} sx={{ borderRadius: 1 }}>
-                    Nuevo Grupo
-                </Button>
+                {can('admin_groups', 'create') && (
+                    <Button variant="contained" startIcon={<Add />} onClick={() => setOpenGroupModal(true)} sx={{ borderRadius: 1 }}>
+                        Nuevo Grupo
+                    </Button>
+                )}
             </Box>
 
             {/* Grid de Tarjetas - 3 por fila */}
@@ -204,9 +219,11 @@ export default function Sistemas() {
                                             </Typography>
                                         </Box>
                                     </Stack>
-                                    <IconButton size="small" onClick={() => handleOpenEditGroup(group)}>
-                                        <Settings fontSize="small" />
-                                    </IconButton>
+                                    {can('admin_groups', 'edit') && (
+                                        <IconButton size="small" onClick={() => handleOpenEditGroup(group)}>
+                                            <Settings fontSize="small" />
+                                        </IconButton>
+                                    )}
                                 </Stack>
 
                                 <Typography variant="body2" color="text.secondary" sx={{ height: 40, overflow: 'hidden' }}>
@@ -220,9 +237,11 @@ export default function Sistemas() {
                                     <Typography variant="caption" fontWeight="700" color="#64748b">
                                         {group.options?.length || 0} Opciones
                                     </Typography>
-                                    <Button size="small" variant="outlined" startIcon={<Visibility />} onClick={() => handleOpenOptions(group)} sx={{ borderRadius: 1 }}>
-                                        Gestionar
-                                    </Button>
+                                    {can('admin_group_options', 'view') && (
+                                        <Button size="small" variant="outlined" startIcon={<Visibility />} onClick={() => handleOpenOptions(group)} sx={{ borderRadius: 1 }}>
+                                            Gestionar
+                                        </Button>
+                                    )}
                                 </Box>
                             </Stack>
                         </Paper>
@@ -243,9 +262,11 @@ export default function Sistemas() {
                 </DialogTitle>
                 <DialogContent dividers>
                     <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreateForm} sx={{ borderRadius: 1 }}>
-                            Nuevo Ítem
-                        </Button>
+                        {can('admin_group_options', 'create') && (
+                            <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreateForm} sx={{ borderRadius: 1 }}>
+                                Nuevo Ítem
+                            </Button>
+                        )}
                     </Box>
                     <TableContainer>
                         <Table size="small">
@@ -264,12 +285,16 @@ export default function Sistemas() {
                                             </Stack>
                                         </TableCell>
                                         <TableCell align="right">
-                                            <IconButton size="small" onClick={() => handleOpenEditForm(option)}>
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton size="small" color="error">
-                                                <DeleteIcon fontSize="small" onClick={() => handleDeleteOption(option.id)} />
-                                            </IconButton>
+                                            {can('admin_group_options', 'edit') && (
+                                                <IconButton size="small" onClick={() => handleOpenEditForm(option)}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                            {can('admin_group_options', 'delete') && (
+                                                <IconButton size="small" color="error">
+                                                    <DeleteIcon fontSize="small" onClick={() => handleDeleteOption(option.id)} />
+                                                </IconButton>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}

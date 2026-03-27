@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import NetworkDeviceModal from '@/components/NetworkDeviceModal';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
     Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Paper, Tabs, Tab, Typography, Chip, CircularProgress, Stack, TextField,
@@ -14,6 +15,7 @@ import {
 } from '@mui/icons-material';
 
 export default function InfraestructuraGestion() {
+    const { can, isLoaded } = usePermissions();
     const router = useRouter();
 
     const [devices, setDevices] = useState({
@@ -136,6 +138,16 @@ export default function InfraestructuraGestion() {
         });
     }, [devices, tabIndex, search, filterLocation, filterStatus]);
 
+    if (!isLoaded) return null;
+
+    if (!can('infrastructure', 'view')) {
+        return (
+            <Box p={4}>
+                <Typography>No tienes acceso a infraestructura</Typography>
+            </Box>
+        );
+    }
+
     if (loading) return <Box display="flex" justifyContent="center" mt={10}><CircularProgress /></Box>;
 
     return (
@@ -147,27 +159,32 @@ export default function InfraestructuraGestion() {
                 </Box>
 
                 <Stack direction="row" spacing={2}>
-                    {tabIndex === 0 && (
+                    {tabIndex === 0 && can('infrastructure', 'create_server') && (
                         <Button
-                            variant="contained" startIcon={<Add />}
+                            variant="contained"
+                            startIcon={<Add />}
                             onClick={() => router.push('/infraestructura/servers/new')}
                             sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                         >
                             Nuevo Servidor
                         </Button>
                     )}
-                    {tabIndex === 1 && (
+
+                    {tabIndex === 1 && can('infrastructure', 'create_nas') && (
                         <Button
-                            variant="contained" startIcon={<Add />}
+                            variant="contained"
+                            startIcon={<Add />}
                             onClick={() => router.push('/infraestructura/nas/new')}
                             sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#a855f7', '&:hover': { bgcolor: '#9333ea' } }}
                         >
                             Nuevo NAS
                         </Button>
                     )}
-                    {tabIndex === 2 && (
+
+                    {tabIndex === 2 && can('infrastructure', 'create_network') && (
                         <Button
-                            variant="contained" startIcon={<Add />}
+                            variant="contained"
+                            startIcon={<Add />}
                             onClick={handleOpenCreateNetwork}
                             sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
                         >
@@ -278,10 +295,13 @@ export default function InfraestructuraGestion() {
                                         component="span"
                                         onClick={() => {
                                             if (tabIndex === 2) {
-                                                // Si es RED, abrimos el modal para EDITAR
+                                                if (!can('network', 'edit')) return;
                                                 handleOpenEditNetwork(device);
                                             } else {
-                                                // Si es Servidor o NAS, navegamos a su página
+                                                const module = tabIndex === 0 ? 'server' : 'nas';
+
+                                                if (!can(module, 'view')) return;
+
                                                 const path = tabIndex === 0 ? 'servers' : 'nas';
                                                 router.push(`/infraestructura/${path}/${device.id}`);
                                             }

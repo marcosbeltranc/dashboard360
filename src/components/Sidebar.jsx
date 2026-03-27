@@ -21,15 +21,15 @@ import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import ShieldIcon from '@mui/icons-material/ShieldOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon fontSize="small" />, path: '/home' },
-    { text: 'Administracion', icon: <AdminIcon fontSize='small' />, path: '/administracion' },
-    { text: 'Sistemas', icon: <DnsIcon fontSize="small" />, path: '/sistemas' },
-    { text: 'Infraestructura', icon: <RouterIcon fontSize="small" />, path: '/infraestructura' },
-    { text: 'Activos', icon: <InventoryIcon fontSize="small" />, path: '/activos' },
-    { text: 'Usuarios', icon: <PeopleIcon fontSize="small" />, path: '/usuarios' },
-    // { text: 'Roles', icon: <ShieldIcon fontSize="small" />, path: '/roles' },
+    { text: 'Dashboard', module: 'dashboard', icon: <DashboardIcon fontSize="small" />, path: '/home' },
+    { text: 'Administracion', module: 'admin', icon: <AdminIcon fontSize='small' />, path: '/administracion' },
+    { text: 'Sistemas', module: 'systems', icon: <DnsIcon fontSize="small" />, path: '/sistemas' },
+    { text: 'Infraestructura', module: 'infrastructure', icon: <RouterIcon fontSize="small" />, path: '/infraestructura' },
+    { text: 'Activos', module: 'activos', icon: <InventoryIcon fontSize="small" />, path: '/activos' },
+    { text: 'Usuarios', module: 'usuarios', icon: <PeopleIcon fontSize="small" />, path: '/usuarios' },
 ];
 
 export default function Sidebar() {
@@ -38,6 +38,8 @@ export default function Sidebar() {
 
     const router = useRouter();
     const pathname = usePathname();
+
+    const { can } = usePermissions();
 
     useEffect(() => {
         setMounted(true);
@@ -94,38 +96,39 @@ export default function Sidebar() {
 
             {/* Navegación */}
             <List sx={{ flexGrow: 1, px: 1.5 }}>
-                {menuItems.map((item) => {
-                    const isActive = pathname === item.path;
-                    return (
-                        <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-                            <ListItemButton
-                                onClick={() => router.push(item.path)}
-                                sx={{
-                                    borderRadius: 1,
-                                    py: 1,
-                                    bgcolor: isActive ? '#f1f5f9' : 'transparent',
-                                    color: isActive ? 'primary.main' : 'text.secondary',
-                                    '&:hover': { bgcolor: '#f8fafc', color: 'primary.main' },
-                                    '& .MuiListItemIcon-root': {
-                                        color: isActive ? 'primary.main' : 'inherit',
-                                        minWidth: 38
-                                    }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    {item.icon}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={item.text}
-                                    primaryTypographyProps={{
-                                        fontSize: '0.875rem',
-                                        fontWeight: isActive ? 600 : 500
+                {menuItems
+                    .filter(item => can(item.module, 'view_menu'))
+                    .map((item) => {
+                        const isActive = pathname === item.path;
+
+                        return (
+                            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                                <ListItemButton
+                                    onClick={() => router.push(item.path)}
+                                    sx={{
+                                        borderRadius: 1,
+                                        py: 1,
+                                        bgcolor: isActive ? '#f1f5f9' : 'transparent',
+                                        color: isActive ? 'primary.main' : 'text.secondary',
+                                        '&:hover': { bgcolor: '#f8fafc', color: 'primary.main' },
+                                        '& .MuiListItemIcon-root': {
+                                            color: isActive ? 'primary.main' : 'inherit',
+                                            minWidth: 38
+                                        }
                                     }}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                    );
-                })}
+                                >
+                                    <ListItemIcon>{item.icon}</ListItemIcon>
+                                    <ListItemText
+                                        primary={item.text}
+                                        primaryTypographyProps={{
+                                            fontSize: '0.875rem',
+                                            fontWeight: isActive ? 600 : 500
+                                        }}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        );
+                    })}
             </List>
 
             <Divider sx={{ mx: 2, opacity: 0.6 }} />
