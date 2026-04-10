@@ -33,7 +33,8 @@ export default function DevicesDashboard({ filter = "all" }) {
     // 🔹 2. WebSocket realtime
     useEffect(() => {
         const ws = new WebSocket(
-            "ws://172.16.101.119:8088/app/jjkdu8flmgs4xvwctbss"
+            // "ws://172.16.101.119:8088/app/jjkdu8flmgs4xvwctbss"
+            "ws://localhost:8088/app/jjkdu8flmgs4xvwctbss"
         );
 
         ws.onopen = () => {
