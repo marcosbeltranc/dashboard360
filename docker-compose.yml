@@ -2,6 +2,7 @@ services:
   frontend:
     build: .
     container_name: dashboard_front
+    restart: always
     ports:
       - "3000:3000"
     volumes:
