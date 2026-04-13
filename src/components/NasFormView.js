@@ -158,7 +158,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
                                 onClick={handleSave}
                                 sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                             >
-                                {mode === 'create' ? 'Crear Activo' : 'Guardar Cambios'}
+                                {mode === 'create' ? 'Crear' : 'Guardar'}
                             </Button>
                         </>
                     )}

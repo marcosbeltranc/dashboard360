@@ -157,9 +157,17 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         view: can('server_updates', 'view'),
     };
     const router = useRouter();
-    const [isEditing, setIsEditing] = useState(
-        canEdit && (mode === 'create' || mode === 'edit')
-    );
+    const [isEditing, setIsEditing] = useState(false);
+    useEffect(() => {
+        if (mode === 'create') {
+            setIsEditing(true);
+        } else if (mode === 'edit' && canEdit) {
+            setIsEditing(true);
+        } else {
+            setIsEditing(false);
+        }
+    }, [mode, canEdit]);
+
     const [formData, setFormData] = useState(initialData || {});
     const [activeTab, setActiveTab] = useState('specs');
     const [openUserModal, setOpenUserModal] = useState(false);
@@ -989,7 +997,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                 onClick={handleSave}
                                 sx={{ borderRadius: 1, textTransform: 'none', px: 3 }}
                             >
-                                {mode === 'create' ? 'Crear Activo' : 'Guardar Cambios'}
+                                {mode === 'create' ? 'Crear' : 'Guardar'}
                             </Button>
                         </>
                     )}
