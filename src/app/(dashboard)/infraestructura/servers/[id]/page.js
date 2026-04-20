@@ -29,7 +29,7 @@ export default function ViewServerPage() {
                 setOptions({
                     statuses: grouped.status_type || [],
                     locations: grouped.location || [],
-                    serverTypes: grouped.server_type || [],
+                    server_types: grouped.server_type || [],
                     responsibles: respRes.data.data || respRes.data || [],
                     maintenance_type: grouped.maintenance_type || [],
                 });

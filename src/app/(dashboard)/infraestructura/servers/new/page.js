@@ -23,7 +23,7 @@ export default function NewServerPage() {
                 setOptions({
                     statuses: grouped.status_type || [],
                     locations: grouped.location || [],
-                    serverTypes: grouped.server_type || [],
+                    server_types: grouped.server_type || [],
                     responsibles: respRes.data.data || respRes.data || [],
                     serverAccess: grouped.server_access || [],
                     serverUsers: grouped.server_user || [],
@@ -45,7 +45,7 @@ export default function NewServerPage() {
     return (
         <ServerFormView
             mode="create" options={options} onSave={handleCreate}
-            initialData={{ name: '', status_id: 10, server_type_id: 1, brand: 'Dell', os: 'Windows Server 2022' }}
+            initialData={{ name: '', status_id: 10, server_type_id: 1, brand: '', os: '' }}
         />
     );
 }

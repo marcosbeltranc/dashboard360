@@ -132,6 +132,49 @@ const UserRow = ({ user, index, isEditing, onUserChange, onDeleteUser, canEdit, 
     );
 };
 
+const DataField = ({ label, name, value, icon: IconComponent, type = 'text', select = false, children, isEditing, handleChange }) => (
+    <Box sx={{ mb: 2, display: 'flex', alignItems: isEditing ? 'flex-start' : 'center', gap: 2 }}>
+        {!isEditing && IconComponent && (
+            <Avatar
+                variant="rounded"
+                sx={{
+                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                    color: 'primary.main',
+                    width: 48,
+                    height: 48,
+                }}
+            >
+                <IconComponent sx={{ fontSize: 24 }} />
+            </Avatar>
+        )}
+
+        <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 0.5, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {isEditing && IconComponent && <IconComponent sx={{ fontSize: 14, mr: 0.5 }} />} {label}
+            </Typography>
+            {isEditing ? (
+                <TextField
+                    fullWidth size="small" name={name} value={value || ''}
+                    onChange={handleChange} select={select} type={type}
+                    variant="outlined"
+                    sx={{ bgcolor: '#fff' }}
+                    InputLabelProps={{ shrink: true }}
+                >
+                    {children}
+                </TextField>
+            ) : (
+                <Typography variant="body1" fontWeight="600" color="#1e293b" sx={{ minHeight: '24px', lineHeight: 1.2 }}>
+                    {select ? (
+                        Array.isArray(children)
+                            ? children.find(c => c.props.value === value)?.props.children || '—'
+                            : children?.props?.value === value ? children.props.children : '—'
+                    ) : (value || '—')}
+                </Typography>
+            )}
+        </Box>
+    </Box>
+);
+
 export default function ServerFormView({ mode = 'view', initialData, options, onSave }) {
     const { can, isLoaded } = usePermissions();
 
@@ -342,49 +385,6 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
         }));
     };
 
-    const DataField = ({ label, name, value, icon: IconComponent, type = 'text', select = false, children }) => (
-        <Box sx={{ mb: 2, display: 'flex', alignItems: isEditing ? 'flex-start' : 'center', gap: 2 }}>
-            {!isEditing && IconComponent && (
-                <Avatar
-                    variant="rounded"
-                    sx={{
-                        bgcolor: 'rgba(25, 118, 210, 0.08)',
-                        color: 'primary.main',
-                        width: 48,
-                        height: 48,
-                    }}
-                >
-                    <IconComponent sx={{ fontSize: 24 }} />
-                </Avatar>
-            )}
-
-            <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 0.5, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    {isEditing && IconComponent && <IconComponent sx={{ fontSize: 14, mr: 0.5 }} />} {label}
-                </Typography>
-                {isEditing ? (
-                    <TextField
-                        fullWidth size="small" name={name} value={value || ''}
-                        onChange={handleChange} select={select} type={type}
-                        variant="outlined"
-                        sx={{ bgcolor: '#fff' }}
-                        InputLabelProps={{ shrink: true }}
-                    >
-                        {children}
-                    </TextField>
-                ) : (
-                    <Typography variant="body1" fontWeight="600" color="#1e293b" sx={{ minHeight: '24px', lineHeight: 1.2 }}>
-                        {select ? (
-                            Array.isArray(children)
-                                ? children.find(c => c.props.value === value)?.props.children || '—'
-                                : children?.props?.value === value ? children.props.children : '—'
-                        ) : (value || '—')}
-                    </Typography>
-                )}
-            </Box>
-        </Box>
-    );
-
     const hasPasswords = formData.server_users?.some(u => u.password);
 
     const renderTabContent = () => {
@@ -405,10 +405,10 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                         >
                             <Typography variant="h6" fontWeight="bold" mb={3}>Hardware</Typography>
                             <Stack spacing={2} sx={{ flexGrow: 1 }}>
-                                <DataField label="Procesador" name="processor" value={formData.processor} icon={Memory} />
-                                <DataField label="Memoria RAM" name="ram" value={formData.ram} icon={SettingsInputComponent} />
-                                <DataField label="Almacenamiento" name="storage" value={formData.storage} icon={Storage} />
-                                <DataField label="Sistema Operativo" name="os" value={formData.os} icon={Terminal} />
+                                <DataField label="Procesador" name="processor" value={formData.processor} icon={Memory} isEditing={isEditing} handleChange={handleChange} />
+                                <DataField label="Memoria RAM" name="ram" value={formData.ram} icon={SettingsInputComponent} isEditing={isEditing} handleChange={handleChange} />
+                                <DataField label="Almacenamiento" name="storage" value={formData.storage} icon={Storage} isEditing={isEditing} handleChange={handleChange} />
+                                <DataField label="Sistema Operativo" name="os" value={formData.os} icon={Terminal} isEditing={isEditing} handleChange={handleChange} />
                             </Stack>
                         </Paper>
 
@@ -450,7 +450,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                             p: 2
                                         }}
                                     >
-                                        <DataField label={field.label} name={field.name} value={field.value} type={field.type} noMargin />
+                                        <DataField label={field.label} name={field.name} value={field.value} type={field.type} noMargin isEditing={isEditing} handleChange={handleChange} />
                                     </Box>
                                 ))}
                             </Box>
@@ -476,14 +476,14 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                     }}
                                 >
                                     <Grid container spacing={2}>
-                                        <Grid item xs={6}><DataField label="Tarjeta de Red" name="network_card" value={formData.network_card} /></Grid>
-                                        <Grid item xs={6}><DataField label="Controladora RAID" name="raid_controller" value={formData.raid_controller} /></Grid>
-                                        <Grid item xs={12}><DataField label="Fuente de Poder" name="power_supply" value={formData.power_supply} /></Grid>
+                                        <Grid item xs={6}><DataField label="Tarjeta de Red" name="network_card" value={formData.network_card} isEditing={isEditing} handleChange={handleChange} /></Grid>
+                                        <Grid item xs={6}><DataField label="Controladora RAID" name="raid_controller" value={formData.raid_controller} isEditing={isEditing} handleChange={handleChange} /></Grid>
+                                        <Grid item xs={12}><DataField label="Fuente de Poder" name="power_supply" value={formData.power_supply} isEditing={isEditing} handleChange={handleChange} /></Grid>
                                     </Grid>
                                 </Paper>
 
                                 <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
-                                <DataField label="Notas" name="notes" value={formData.notes} />
+                                <DataField label="Notas" name="notes" value={formData.notes} isEditing={isEditing} handleChange={handleChange} isEditing={isEditing} handleChange={handleChange} />
                             </Stack>
                         </Paper>
                     </Stack>
@@ -1006,41 +1006,68 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
 
             <Stack direction="row" spacing={1} mb={3} alignItems="center">
                 {isEditing ? (
-                    <Box sx={{ minWidth: 200 }}>
-                        <TextField
-                            select
-                            fullWidth
-                            size="small"
-                            name="status_id"
-                            value={formData.status_id || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            label="Estado del Equipo"
-                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                        >
-                            {options?.statuses?.map(opt => (
-                                <MenuItem key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </Box>
+                    <Stack direction="row" spacing={2} sx={{ width: '100%', maxWidth: 500 }}>
+                        {/* Selector de Estado */}
+                        <Box sx={{ flex: 1 }}>
+                            <TextField
+                                select
+                                fullWidth
+                                size="small"
+                                name="status_id"
+                                label="Estado"
+                                value={formData.status_id || ''}
+                                onChange={handleChange}
+                                variant="outlined"
+                                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                            >
+                                {options?.statuses?.map(opt => (
+                                    <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                                ))}
+                            </TextField>
+                        </Box>
+
+                        {/* Selector de Tipo de Servidor (NUEVO) */}
+                        <Box sx={{ flex: 1 }}>
+                            <TextField
+                                select
+                                fullWidth
+                                size="small"
+                                name="server_type_id"
+                                label="Tipo de Servidor"
+                                value={formData.server_type_id || ''}
+                                onChange={handleChange}
+                                variant="outlined"
+                                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                            >
+                                {options?.server_types?.map(opt => (
+                                    <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                                ))}
+                            </TextField>
+                        </Box>
+                    </Stack>
                 ) : (
-                    <Chip
-                        label={options?.statuses?.find(s => s.id === formData.status_id)?.name || 'Activo'}
-                        size="small"
-                        sx={{
-                            bgcolor: formData.status_id === 10 ? '#dcfce7' : '#fee2e2',
-                            color: formData.status_id === 10 ? '#166534' : '#991b1b',
-                            fontWeight: 'bold',
-                            borderRadius: 1
-                        }}
-                    />
+                    <>
+                        {/* Vista de lectura */}
+                        <Chip
+                            label={options?.statuses?.find(s => s.id === formData.status_id)?.name || 'Activo'}
+                            size="small"
+                            sx={{
+                                bgcolor: formData.status_id === 10 ? '#dcfce7' : '#fee2e2',
+                                color: formData.status_id === 10 ? '#166534' : '#991b1b',
+                                fontWeight: 'bold', borderRadius: 1
+                            }}
+                        />
+                        <Chip
+                            label={options?.server_types?.find(t => t.id === formData.server_type_id)?.name || 'Tipo N/A'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ borderRadius: 1, fontWeight: 500 }}
+                        />
+                    </>
                 )}
 
                 {/* Estos se mantienen como Chips informativos */}
                 <Chip label={formData.sku || 'SKU-PENDIENTE'} size="small" variant="outlined" sx={{ borderRadius: 1, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
-                <Chip label={formData.brand || 'Marca N/A'} size="small" variant="outlined" sx={{ borderRadius: 1, border: '1px solid #e2e8f0', bgcolor: '#fff' }} />
             </Stack>
 
             <Stack
@@ -1076,6 +1103,8 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                 icon={item.icon}
                                 type={item.type}
                                 select={item.select}
+                                isEditing={isEditing}
+                                handleChange={handleChange}
                             >
                                 {item.select && options[item.optionsKey]?.map(opt => (
                                     <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
