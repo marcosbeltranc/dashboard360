@@ -305,21 +305,31 @@ export default function SystemFormView({
                     </Typography>
 
                     {isEditing ? (
-                        <TextField
-                            fullWidth
-                            select
-                            size="small"
-                            name="areas"
-                            value={formData.areas || []}
-                            onChange={handleChange}
-                            SelectProps={{ multiple: true }}
-                        >
-                            {options?.areas?.map(opt => (
-                                <MenuItem key={opt.id} value={opt.id}>
-                                    {opt.name}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                        <Autocomplete
+                            multiple
+                            options={options?.areas || []}
+                            getOptionLabel={(option) => option.name}
+                            value={options?.areas?.filter(opt => formData.areas?.includes(opt.id)) || []}
+                            onChange={(event, newValue) => {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    areas: newValue.map(v => v.id)
+                                }));
+                            }}
+                            renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                    <Chip key={option.id} label={option.name} {...getTagProps({ index })} />
+                                ))
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Áreas que usan el sistema"
+                                    placeholder="Selecciona áreas"
+                                    size="small"
+                                />
+                            )}
+                        />
                     ) : (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                             {options?.areas

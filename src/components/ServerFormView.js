@@ -483,7 +483,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
                                 </Paper>
 
                                 <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
-                                <DataField label="Notas" name="notes" value={formData.notes} isEditing={isEditing} handleChange={handleChange} isEditing={isEditing} handleChange={handleChange} />
+                                <DataField label="Notas" name="notes" value={formData.notes} isEditing={isEditing} handleChange={handleChange} />
                             </Stack>
                         </Paper>
                     </Stack>
