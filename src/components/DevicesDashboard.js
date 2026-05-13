@@ -58,7 +58,8 @@ export default function DevicesDashboard({ filter = "all" }) {
     }, []);
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8088/app/jjkdu8flmgs4xvwctbss");
+        // const ws = new WebSocket("ws://localhost:8088/app/jjkdu8flmgs4xvwctbss");
+        const ws = new WebSocket("wss://gaiaws.grupomepiel.com.mx/app/jjkdu8flmgs4xvwctbss");
         ws.onmessage = (event) => {
             try {
                 const response = JSON.parse(event.data);
