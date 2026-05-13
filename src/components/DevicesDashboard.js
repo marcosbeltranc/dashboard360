@@ -21,7 +21,7 @@ export default function DevicesDashboard({ filter = "all" }) {
 
                 const initialSetup = serverBase.map(server => ({
                     id: server.id,
-                    name: server.name,
+                    name: server.name || "Unknown",
                     created_at: server.created_at,
                     serverDetails: server,
                     stats: null,
@@ -38,7 +38,7 @@ export default function DevicesDashboard({ filter = "all" }) {
 
                 setDevices(prev => prev.map(device => {
                     const liveData = realTimeStats.find(stat =>
-                        stat.name.toLowerCase() === device.name.toLowerCase()
+                        stat?.name?.toLowerCase() === device.name?.toLowerCase()
                     );
                     return {
                         ...device,
@@ -65,8 +65,11 @@ export default function DevicesDashboard({ filter = "all" }) {
                 const response = JSON.parse(event.data);
                 const newData = response.data;
 
+                // Validar que newData y hostname existen antes de mapear
+                if (!newData || !newData.hostname) return;
+
                 setDevices((prev) => prev.map((d) =>
-                    d.name.toLowerCase() === newData.hostname.toLowerCase()
+                    d.name?.toLowerCase() === newData.hostname.toLowerCase()
                         ? { ...d, stats: newData, isOnline: true, isSyncing: false }
                         : d
                 ));
@@ -77,7 +80,7 @@ export default function DevicesDashboard({ filter = "all" }) {
 
     const filtered = filter === "all"
         ? devices
-        : devices.filter((d) => d.name === filter);
+        : devices.filter((d) => d.name?.toLowerCase() === filter.toLowerCase());
 
     if (loading) return <Box p={4}><Typography>Cargando lista base...</Typography></Box>;
     if (filtered.length === 0) return <Typography>No hay dispositivos</Typography>;
