@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import SystemFormView from '@/components/SystemFormView';
 import { Box, CircularProgress } from '@mui/material';
+import toast from 'react-hot-toast';
 
 export default function NewSystemPage() {
     const router = useRouter();
@@ -57,12 +58,11 @@ export default function NewSystemPage() {
 
     const handleCreate = async (formData) => {
         try {
-            // Limpiamos los datos antes de enviar (ej. convertir IDs a números si es necesario)
             await api.post('/systems', formData);
             router.push('/sistemas');
         } catch (e) {
             console.error("Error al guardar:", e);
-            alert("Error al crear el sistema");
+            toast.error("Error al crear el sistema");
         }
     };
 

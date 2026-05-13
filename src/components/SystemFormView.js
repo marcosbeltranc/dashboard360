@@ -17,6 +17,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RichTextEditor from '@/components/RichTextEditor';
 import SystemFilesManager from '@/components/SystemFilesManager';
 import { usePermissions } from '@/hooks/usePermissions';
+import toast from 'react-hot-toast';
 
 export default function SystemFormView({
     mode = 'view',
@@ -47,6 +48,17 @@ export default function SystemFormView({
     };
 
     const handleSave = () => {
+        if (formData.faqs && formData.faqs.length > 0) {
+            const hasEmptyFaq = formData.faqs.some(
+                faq => !faq.question?.trim() || !faq.answer?.trim()
+            );
+
+            if (hasEmptyFaq) {
+                // Usando el toast que ya tienes en otros componentes de Gaia
+                toast.error('Por favor, completa todas las preguntas y respuestas de las FAQs o elimina las vacías.');
+                return;
+            }
+        }
         onSave(formData);
         if (mode !== 'create') setIsEditing(false);
     };
@@ -137,7 +149,7 @@ export default function SystemFormView({
     });
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
+        <Box sx={{ p: 4, minHeight: '100vh' }} className="bg-white p-6 rounded-lg shadow-sm">
             {/* HEADER */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center" gap={2}>

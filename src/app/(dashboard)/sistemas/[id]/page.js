@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import SystemFormView from '@/components/SystemFormView';
 import { Box, CircularProgress, Alert } from '@mui/material';
+import toast from 'react-hot-toast';
 
 export default function SystemDetailPage({ params: paramsPromise }) {
     const router = useRouter();
@@ -67,7 +68,7 @@ export default function SystemDetailPage({ params: paramsPromise }) {
             router.refresh();
         } catch (e) {
             console.error(e);
-            alert("Error al actualizar el sistema");
+            toast.error("Error al actualizar el sistema");
         }
     };
 
@@ -89,7 +90,7 @@ export default function SystemDetailPage({ params: paramsPromise }) {
 
     return (
         <SystemFormView
-            mode="view" // Iniciamos en modo vista
+            mode="view"
             initialData={data.system}
             options={data.options}
             servers={data.servers}

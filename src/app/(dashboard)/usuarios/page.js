@@ -71,8 +71,14 @@ export default function UsersPage() {
     // Create / Update
     const handleSave = async () => {
         try {
+            const payload = { ...form };
+
+            if (!payload.password || payload.password.trim() === '') {
+                delete payload.password;
+            }
+
             if (editingUser) {
-                await api.put(`/users/${editingUser.id}`, form);
+                await api.put(`/users/${editingUser.id}`, payload);
                 toast.success('Usuario actualizado');
             } else {
                 await api.post('/users', form);
@@ -115,7 +121,7 @@ export default function UsersPage() {
     };
 
     return (
-        <Box p={4}>
+        <Box p={4} className="bg-white p-6 rounded-lg shadow-sm">
 
             {/* HEADER */}
             <Stack direction="row" justifyContent="space-between" mb={3}>

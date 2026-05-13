@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import api from '@/lib/api';
 import { usePermissions } from '@/hooks/usePermissions';
+import toast from 'react-hot-toast';
 
 const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
@@ -67,7 +68,7 @@ export default function Administracion() {
             setNewGroup({ name: '', code: '', description: '' });
         } catch (error) {
             console.error("Error al crear grupo:", error);
-            alert("Error: El código debe ser único.");
+            toast.error('El código debe ser único.');
         }
     };
 
@@ -91,7 +92,7 @@ export default function Administracion() {
             setEditingGroup(null);
         } catch (error) {
             console.error("Error al editar grupo:", error);
-            alert("Hubo un error al guardar los cambios.");
+            toast.error('Hubo un error al guardar los cambios.');
         }
     };
 
@@ -121,7 +122,7 @@ export default function Administracion() {
             setOpenOptionsModal(false);
         } catch (error) {
             console.error("Error al eliminar opción:", error);
-            alert("Hubo un error al eliminar la opción.");
+            toast.error("Hubo un error al eliminar la opción.");
         }
     };
 
@@ -161,7 +162,7 @@ export default function Administracion() {
             setEditingOption(null);
         } catch (error) {
             console.error("Error al guardar opción:", error);
-            alert("Hubo un error al guardar los cambios.");
+            toast.error("Hubo un error al guardar los cambios.");
         }
     };
 
@@ -180,7 +181,7 @@ export default function Administracion() {
     }
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f1f5f9', minHeight: '100vh' }}>
+        <Box className="bg-white p-6 rounded-lg shadow-sm" sx={{ p: { xs: 2, md: 4 }, bgcolor: '#fff', minHeight: '100vh' }}>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={5}>
                 <Box>

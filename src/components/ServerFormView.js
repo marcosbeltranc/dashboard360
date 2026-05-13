@@ -900,7 +900,7 @@ export default function ServerFormView({ mode = 'view', initialData, options, on
     }
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
+        <Box sx={{ p: 4, minHeight: '100vh' }} className="bg-white p-6 rounded-lg shadow-sm">
             {/* Header / Top Bar */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center" gap={2}>

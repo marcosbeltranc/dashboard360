@@ -82,7 +82,7 @@ export default function NasFormView({ mode = 'view', initialData, options, onSav
     );
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
+        <Box sx={{ p: 4, minHeight: '100vh' }} className="bg-white p-6 rounded-lg shadow-sm">
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box display="flex" alignItems="center" gap={2}>
                     <IconButton onClick={() => router.back()} sx={{ bgcolor: '#fff', border: '1px solid #e2e8f0', borderRadius: 1 }}>

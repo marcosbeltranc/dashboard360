@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import NasFormView from '@/components/NasFormView';
 import { Box, CircularProgress } from '@mui/material';
+import toast from 'react-hot-toast';
 
 export default function NewNasPage() {
     const router = useRouter();
@@ -35,7 +36,7 @@ export default function NewNasPage() {
         try {
             await api.post('/nas-devices', { ...formData, device_type_id: 6 });
             router.push('/infraestructura');
-        } catch (e) { alert("Error al crear"); }
+        } catch (e) { toast.error("Error al crear"); }
     };
 
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;

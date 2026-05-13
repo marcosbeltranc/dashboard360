@@ -122,7 +122,7 @@ export default function SistemasGestion() {
     if (loading) return <Box display="flex" justifyContent="center" mt={10}><CircularProgress /></Box>;
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
+        <Box className="bg-white p-6 rounded-lg shadow-sm" sx={{ p: 4, bgcolor: '#fff', minHeight: '100vh' }}>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box>
