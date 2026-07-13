@@ -133,7 +133,7 @@ export default function SistemasGestion() {
                     <Button
                         variant="contained"
                         startIcon={<Add />}
-                        onClick={() => router.push('/sistemas/new')} // Cambiado de setOpenModal
+                        onClick={() => router.push('/sistemas/new')}
                         sx={{ borderRadius: 1, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
                     >
                         Nuevo Sistema
@@ -165,32 +165,74 @@ export default function SistemasGestion() {
                 </TextField>
             </Stack>
 
-            {/* Grid de Sistemas */}
-            <Grid container spacing={3}>
+            {/* Grid de Sistemas - CORREGIDO */}
+            <Grid
+                container
+                spacing={3}
+                alignItems="stretch"
+                sx={{
+                    // Fuerza que todos los items se alineen correctamente
+                    '& > .MuiGrid-item': {
+                        display: 'flex',  // ← Cada item es un flex container
+                    }
+                }}
+            >
                 {filteredSystems.map((sys) => {
                     const pStyle = getPriorityStyle(sys.priority?.slug);
                     return (
-                        <Grid item xs={12} sm={6} md={4} key={sys.id}>
+                        <Grid
+                            item
+                            xs={12}
+                            sm={6}
+                            md={4}
+                            lg={3}
+                            key={sys.id}
+                            sx={{
+                                display: 'flex',           // ← Flex para que ocupe todo el espacio
+                                minWidth: 0,               // ← CRÍTICO: permite que el item se encoja
+                                flexBasis: '20%',          // ← Fuerza exactamente 25% de ancho
+                                maxWidth: '20%',           // ← Nunca más del 25%
+                            }}
+                        >
                             <Card sx={{
                                 borderRadius: 1,
                                 border: '1px solid #e2e8f0',
                                 boxShadow: 'none',
+                                width: '100%',             // ← OCUPA 100% del ancho del Grid item
+                                minWidth: 0,               // ← Permite que se encoja si el contenido es grande
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
                                 transition: '0.2s',
                                 '&:hover': { borderColor: '#3b82f6', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }
                             }}>
-                                <CardContent>
-                                    <Box display="flex" justifyContent="space-between" mb={2}>
-                                        <Stack direction="row" spacing={2} alignItems="center">
-                                            <Box sx={{ bgcolor: '#eff6ff', p: 1, borderRadius: 1, display: 'flex' }}>
+                                <CardContent sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    flexGrow: 1,
+                                    width: '100%',         // ← Asegura que el contenido no desborde
+                                    minWidth: 0,           // ← CRÍTICO para text-overflow
+                                    p: 3,
+                                    '&:last-child': { pb: 3 }
+                                }}>
+                                    {/* Header de la tarjeta */}
+                                    <Box display="flex" justifyContent="space-between" mb={2} alignItems="flex-start" sx={{ width: '100%', minWidth: 0 }}>
+                                        <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ minWidth: 0, flex: 1 }}>
+                                            <Box sx={{ bgcolor: '#eff6ff', p: 1, borderRadius: 1, display: 'flex', flexShrink: 0 }}>
                                                 <Language sx={{ color: '#3b82f6' }} />
                                             </Box>
-                                            <Box>
+                                            <Box sx={{ minWidth: 0, flex: 1 }}>
                                                 <Typography
                                                     variant="subtitle1"
                                                     fontWeight="bold"
                                                     sx={{
                                                         cursor: can('systems_detail', 'view') ? 'pointer' : 'default',
-                                                        '&:hover': can('systems_detail', 'view') ? { color: 'primary.main' } : {}
+                                                        '&:hover': can('systems_detail', 'view') ? { color: 'primary.main' } : {},
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        width: '100%',     // ← Necesario para text-overflow
+                                                        display: 'block'   // ← Necesario para text-overflow
                                                     }}
                                                     onClick={() => {
                                                         if (!can('systems_detail', 'view')) return;
@@ -199,8 +241,8 @@ export default function SistemasGestion() {
                                                 >
                                                     {sys.name}
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary" display="flex" alignItems="center">
-                                                    <Storage sx={{ fontSize: 12, mr: 0.5 }} /> {sys.server?.name || 'No asignado'}
+                                                <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" sx={{ mt: 0.5 }}>
+                                                    <Storage sx={{ fontSize: 14, mr: 0.5 }} /> {sys.server?.name || 'No asignado'}
                                                 </Typography>
                                             </Box>
                                         </Stack>
@@ -210,40 +252,47 @@ export default function SistemasGestion() {
                                             sx={{
                                                 bgcolor: sys.status?.slug === 'active' ? '#f0fdf4' : '#f1f5f9',
                                                 color: sys.status?.slug === 'active' ? '#16a34a' : '#64748b',
-                                                fontWeight: 'bold', fontSize: 11
+                                                fontWeight: 'bold',
+                                                fontSize: 11,
+                                                flexShrink: 0,
+                                                ml: 1
                                             }}
                                         />
                                     </Box>
 
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, height: 40, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    {/* Descripción */}
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{
+                                            mb: 2,
+                                            flexGrow: 1,
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 3,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden',
+                                            lineHeight: 1.5
+                                        }}
+                                    >
                                         {sys.description || 'Sin descripción técnica.'}
                                     </Typography>
 
-                                    {/* <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ pt: 2, borderTop: '1px solid #f1f5f9' }}>
-                                        <Chip
-                                            label={sys.priority?.name}
-                                            size="small"
-                                            sx={{ bgcolor: pStyle.bg, color: pStyle.text, border: `1px solid ${pStyle.border}`, fontWeight: '600' }}
-                                        />
-                                        <Stack direction="row" spacing={2} color="text.disabled">
-                                            <Tooltip title="Documentación API">
-                                                <Box display="flex" alignItems="center" gap={0.5}>
-                                                    <Description fontSize="small" sx={{ color: sys.api_doc_url ? '#3b82f6' : 'inherit' }} />
-                                                </Box>
-                                            </Tooltip>
-                                            <Tooltip title="Responsable">
-                                                <Box display="flex" alignItems="center" gap={0.5}>
-                                                    <People fontSize="small" />
-                                                </Box>
-                                            </Tooltip>
-                                        </Stack>
-                                    </Box> */}
-
+                                    {/* Botón siempre al fondo */}
                                     {sys.url && (
                                         <Button
-                                            fullWidth variant="outlined" startIcon={<OpenInNew />}
-                                            href={sys.url} target="_blank"
-                                            sx={{ borderRadius: 1, textTransform: 'none', color: '#1e293b', borderColor: '#e2e8f0' }}
+                                            fullWidth
+                                            variant="outlined"
+                                            startIcon={<OpenInNew />}
+                                            href={sys.url}
+                                            target="_blank"
+                                            sx={{
+                                                mt: 'auto',
+                                                borderRadius: 1,
+                                                textTransform: 'none',
+                                                color: '#1e293b',
+                                                borderColor: '#e2e8f0',
+                                                py: 1
+                                            }}
                                         >
                                             Ir al Sistema
                                         </Button>
@@ -254,8 +303,6 @@ export default function SistemasGestion() {
                     );
                 })}
             </Grid>
-
-
         </Box>
     );
 }

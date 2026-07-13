@@ -22,10 +22,10 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 const menuItems = [
     { text: 'Dashboard', module: 'dashboard', icon: <DashboardIcon fontSize="small" />, path: '/home' },
-    { text: 'Administracion', module: 'admin', icon: <AdminIcon fontSize='small' />, path: '/administracion' },
     { text: 'Sistemas', module: 'systems', icon: <DnsIcon fontSize="small" />, path: '/sistemas' },
     { text: 'Infraestructura', module: 'infrastructure', icon: <RouterIcon fontSize="small" />, path: '/infraestructura' },
     { text: 'Usuarios', module: 'usuarios', icon: <PeopleIcon fontSize="small" />, path: '/usuarios' },
+    { text: 'Administracion', module: 'admin', icon: <AdminIcon fontSize='small' />, path: '/administracion' },
 ];
 
 export default function Sidebar() {

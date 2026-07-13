@@ -605,11 +605,12 @@ export default function SystemFormView({
             </Paper>
 
             <Divider sx={{ mb: 4 }} />
-
-            <SystemFilesManager
-                systemId={formData.id}
-                isEditing={isEditing}
-            />
+            {mode !== 'create' && (
+                <SystemFilesManager
+                    systemId={formData.id}
+                    isEditing={isEditing}
+                />
+            )}
         </Box>
     );
 }

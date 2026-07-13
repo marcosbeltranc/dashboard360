@@ -3,11 +3,21 @@ import { Paper, Typography, Box, Chip, LinearProgress, Stack, Divider } from "@m
 import { Schedule, CloudOff, FiberManualRecord } from "@mui/icons-material";
 
 export default function DeviceCard({ device }) {
-    const { isOnline, stats, name, created_at } = device;
+    const { isOnline, stats, name } = device;
 
     const cpu = stats?.cpu_percent ?? 0;
     const ram = stats?.ram_percent ?? 0;
-    const dateFormatted = created_at ? new Date(created_at).toLocaleDateString() : '---';
+    const dateFormatted = stats?.timestamp
+        ? new Date(stats.timestamp).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false // Para formato de 24 horas
+        })
+        : '---';
+    // const dateFormatted = created_at ? new Date(created_at).toLocaleDateString() : '---';
 
     return (
         <Paper
@@ -62,7 +72,7 @@ export default function DeviceCard({ device }) {
                 </Box>
                 <Stack direction="row" spacing={0.5} alignItems="center" color="text.secondary" mt={0.5}>
                     <Schedule sx={{ fontSize: 14 }} />
-                    <Typography variant="caption">Creado: {dateFormatted}</Typography>
+                    <Typography variant="caption">Ultima actualizacion: {dateFormatted}</Typography>
                 </Stack>
             </Box>
 
