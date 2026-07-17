@@ -1,9 +1,21 @@
 // DeviceCard.js (Versión con ancho fijo y títulos truncados)
 import { Paper, Typography, Box, Chip, LinearProgress, Stack, Divider } from "@mui/material";
 import { Schedule, CloudOff, FiberManualRecord } from "@mui/icons-material";
+import React from 'react';
 
 export default function DeviceCard({ device }) {
     const { isOnline, stats, name } = device;
+
+    // 1. Calcular si el dispositivo está "expirado" (más de 5 minutos)
+    const isExpired = React.useMemo(() => {
+        if (!stats?.timestamp || !isOnline) return false;
+        const lastUpdate = new Date(stats.timestamp).getTime();
+        const now = new Date().getTime();
+        return (now - lastUpdate) > 5 * 60 * 1000; // 5 minutos en ms
+    }, [stats?.timestamp, isOnline]);
+
+    // Usar un estado visual combinado
+    const effectiveStatus = isOnline && !isExpired;
 
     const cpu = stats?.cpu_percent ?? 0;
     const ram = stats?.ram_percent ?? 0;
@@ -51,7 +63,7 @@ export default function DeviceCard({ device }) {
                         {name}
                     </Typography>
                     <Chip
-                        icon={isOnline ?
+                        icon={effectiveStatus ?
                             <FiberManualRecord sx={{ fontSize: '0.8rem !important', color: 'green !important' }} /> :
                             <CloudOff sx={{ fontSize: '0.8rem !important', color: 'red !important' }} />
                         }
@@ -62,8 +74,8 @@ export default function DeviceCard({ device }) {
                             height: 24,
                             px: 0.5,
                             border: 'none',
-                            color: isOnline ? 'success.main' : 'error.main',
-                            bgcolor: isOnline ? 'success.lighter' : 'error.lighter',
+                            color: effectiveStatus ? 'success.main' : 'error.main',
+                            bgcolor: effectiveStatus ? 'success.lighter' : 'error.lighter',
                             '& .MuiChip-icon': {
                                 marginLeft: '4px'
                             }
@@ -81,17 +93,25 @@ export default function DeviceCard({ device }) {
             {/* 2. CONTENIDO */}
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {isOnline ? (
-                    <Stack spacing={3}>
+                    <Stack spacing={3}
+                        sx={{
+                            filter: effectiveStatus ? 'none' : 'grayscale(1)',
+                            opacity: effectiveStatus ? 1 : 0.6
+                        }}
+                    >
                         <MetricBar label="CPU" value={cpu} />
                         <MetricBar label="RAM" value={ram} />
                     </Stack>
                 ) : (
                     <Box
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{ opacity: 0.4, py: 2 }}
+                        sx={{
+                            flexGrow: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            filter: effectiveStatus ? 'none' : 'grayscale(1)',
+                            opacity: effectiveStatus ? 1 : 0.6
+                        }}
                     >
                         <CloudOff sx={{ fontSize: 48, mb: 1 }} />
                         <Typography variant="body2" fontWeight="500">

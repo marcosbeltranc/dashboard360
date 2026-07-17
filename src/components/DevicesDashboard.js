@@ -22,6 +22,7 @@ export default function DevicesDashboard({ filter = "all" }) {
                 const initialSetup = serverBase.map(server => ({
                     id: server.id,
                     name: server.name || "Unknown",
+                    sku: server.sku,
                     created_at: server.created_at,
                     serverDetails: server,
                     stats: null,
@@ -38,7 +39,7 @@ export default function DevicesDashboard({ filter = "all" }) {
 
                 setDevices(prev => prev.map(device => {
                     const liveData = realTimeStats.find(stat =>
-                        stat?.name?.toLowerCase() === device.name?.toLowerCase()
+                        stat?.name?.toLowerCase() === device.sku?.toLowerCase()
                     );
                     return {
                         ...device,
@@ -58,29 +59,138 @@ export default function DevicesDashboard({ filter = "all" }) {
     }, []);
 
     useEffect(() => {
-        // const ws = new WebSocket("ws://localhost:8088/app/jjkdu8flmgs4xvwctbss");
-        const ws = new WebSocket("wss://gaiaws.grupomepiel.com.mx/app/jjkdu8flmgs4xvwctbss");
+        const ws = new WebSocket(
+            "wss://gaiaws.grupomepiel.com.mx/app/jjkdu8flmgs4xvwctbss?protocol=7&client=js&version=8.4.0&flash=false"
+        );
+
+        ws.onopen = () => {
+            console.log("WebSocket abierto");
+        };
+
         ws.onmessage = (event) => {
             try {
                 const response = JSON.parse(event.data);
-                const newData = response.data;
 
-                // Validar que newData y hostname existen antes de mapear
-                if (!newData || !newData.hostname) return;
+                console.log("Mensaje WebSocket:", response);
 
-                setDevices((prev) => prev.map((d) =>
-                    d.name?.toLowerCase() === newData.hostname.toLowerCase()
-                        ? { ...d, stats: newData, isOnline: true, isSyncing: false }
-                        : d
-                ));
-            } catch (e) { console.error("WS parse error:", e); }
+                // Esperamos a que Reverb confirme la conexión
+                if (response.event === "pusher:connection_established") {
+                    ws.send(JSON.stringify({
+                        event: "pusher:subscribe",
+                        data: {
+                            channel: "servers"
+                        }
+                    }));
+
+                    return;
+                }
+
+                // Confirmación de suscripción
+                if (
+                    response.event === "pusher_internal:subscription_succeeded"
+                ) {
+                    console.log("Suscrito al canal servers");
+                    return;
+                }
+
+                // Reverb puede enviar ping para mantener viva la conexión
+                if (response.event === "pusher:ping") {
+                    ws.send(JSON.stringify({
+                        event: "pusher:pong",
+                        data: {}
+                    }));
+
+                    return;
+                }
+
+                // Ignorar cualquier otro evento
+                if (response.event !== "metrics.updated") {
+                    return;
+                }
+
+                const payload =
+                    typeof response.data === "string"
+                        ? JSON.parse(response.data)
+                        : response.data;
+
+                /*
+                * Laravel probablemente manda:
+                *
+                * {
+                *   data: {
+                *     hostname: "...",
+                *     ...
+                *   }
+                * }
+                */
+                const newData = payload.data ?? payload;
+
+                if (!newData?.hostname) {
+                    console.warn("Evento sin hostname:", payload);
+                    return;
+                }
+
+                setDevices((prev) =>
+                    prev.map((device) =>
+                        device.sku?.toLowerCase() ===
+                            newData.hostname.toLowerCase()
+                            ? {
+                                ...device,
+                                stats: newData,
+                                isOnline: true,
+                                isSyncing: false
+                            }
+                            : device
+                    )
+                );
+            } catch (error) {
+                console.error(
+                    "Error procesando WebSocket:",
+                    error,
+                    event.data
+                );
+            }
         };
-        return () => ws.close();
+
+        ws.onerror = (error) => {
+            console.error("Error WebSocket:", error);
+        };
+
+        ws.onclose = (event) => {
+            console.log(
+                "WebSocket cerrado:",
+                event.code,
+                event.reason
+            );
+        };
+
+        return () => {
+            ws.close();
+        };
     }, []);
 
-    const filtered = filter === "all"
+    let filtered = filter === "all"
         ? devices
         : devices.filter((d) => d.name?.toLowerCase() === filter.toLowerCase());
+
+    filtered.forEach(element => {
+        console.log(`nombre: ${element.name}, sync: ${element.isSyncing}, online: ${element.isOnline}`);
+    });
+
+    // Ordenar primero fecha mas reciente, luego fecha mas vieja y por ultimo sin fecha
+    filtered.sort((a, b) => {
+        const dateA = a.stats?.timestamp ? new Date(a.stats.timestamp).getTime() : null;
+        const dateB = b.stats?.timestamp ? new Date(b.stats.timestamp).getTime() : null;
+
+        if (dateA && dateB) {
+            return dateB - dateA;
+        }
+
+        if (dateA) return -1;
+        if (dateB) return 1;
+
+        return a.name.localeCompare(b.name);
+    });
 
     if (loading) return <Box p={4}><Typography>Cargando lista base...</Typography></Box>;
     if (filtered.length === 0) return <Typography>No hay dispositivos</Typography>;
