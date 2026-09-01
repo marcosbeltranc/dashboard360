@@ -34,7 +34,7 @@ export default function NewNasPage() {
 
     const handleCreate = async (formData) => {
         try {
-            await api.post('/nas-devices', { ...formData, device_type_id: 6 });
+            await api.post('/nas-devices', { ...formData, device_type_id: 25 });
             router.push('/infraestructura');
         } catch (e) { toast.error("Error al crear"); }
     };

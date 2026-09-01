@@ -85,7 +85,7 @@ export default function SystemFilesManager({ systemId, isEditing }) {
     };
 
     const handleDownload = (id) => {
-        window.open(`https://gaiabackend.grupomepiel.com.mx/api/file/${id}/download`);
+        window.open(`${process.env.NEXT_PUBLIC_API_URL}/files/${id}/download`);
     };
 
     return (

@@ -174,7 +174,7 @@ export default function DevicesDashboard({ filter = "all" }) {
         : devices.filter((d) => d.name?.toLowerCase() === filter.toLowerCase());
 
     filtered.forEach(element => {
-        console.log(`nombre: ${element.name}, sync: ${element.isSyncing}, online: ${element.isOnline}`);
+        console.log(element.stats?.timestamp);
     });
 
     // Ordenar primero fecha mas reciente, luego fecha mas vieja y por ultimo sin fecha
