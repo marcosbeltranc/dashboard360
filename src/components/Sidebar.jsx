@@ -15,6 +15,7 @@ import {
 import DashboardIcon from '@mui/icons-material/GridViewOutlined';
 import AdminIcon from '@mui/icons-material/SettingsOutlined';
 import DnsIcon from '@mui/icons-material/DnsOutlined';
+import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructionsOutlined';
 import RouterIcon from '@mui/icons-material/RouterOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
@@ -23,6 +24,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 const menuItems = [
     { text: 'Dashboard', module: 'dashboard', icon: <DashboardIcon fontSize="small" />, path: '/home' },
     { text: 'Sistemas', module: 'systems', icon: <DnsIcon fontSize="small" />, path: '/sistemas' },
+    { text: 'Integraciones', module: 'integrations', icon: <IntegrationInstructionsIcon fontSize="small" />, path: '/integraciones' },
     { text: 'Infraestructura', module: 'infrastructure', icon: <RouterIcon fontSize="small" />, path: '/infraestructura' },
     { text: 'Usuarios', module: 'usuarios', icon: <PeopleIcon fontSize="small" />, path: '/usuarios' },
     { text: 'Administracion', module: 'admin', icon: <AdminIcon fontSize='small' />, path: '/administracion' },

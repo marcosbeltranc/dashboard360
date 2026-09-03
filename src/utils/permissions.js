@@ -56,6 +56,15 @@ export const PERMISSIONS = {
         edit: [0, 1],
     },
 
+    // INTEGRACIONES
+    integrations: {
+        view_menu: [0, 1, 2, 3],
+        view: [0, 1, 2, 3],
+        create: [0],
+        edit: [0],
+        deactivate: [0],
+    },
+
     // INFRAESTRUCTURA (general)
     infrastructure: {
         view_menu: [0, 1, 2, 3],
