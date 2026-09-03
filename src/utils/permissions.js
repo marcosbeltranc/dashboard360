@@ -60,8 +60,8 @@ export const PERMISSIONS = {
     integrations: {
         view_menu: [0, 1, 2, 3],
         view: [0, 1, 2, 3],
-        create: [0],
-        edit: [0],
+        create: [0, 1],
+        edit: [0, 1],
         deactivate: [0],
     },
 
