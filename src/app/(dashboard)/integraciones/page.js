@@ -70,7 +70,7 @@ export default function IntegracionesPage() {
         <Box sx={{ minHeight: '100%', bgcolor: '#fff', p: { xs: 2, md: 4 }, borderRadius: 2 }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2} mb={4}>
                 <Box>
-                    <Typography variant="h4" fontWeight={700}>Integraciones</Typography>
+                    <Typography variant="h4" fontWeight="bold" color="#1e293b">Integraciones</Typography>
                     <Typography color="text.secondary">Inventario técnico y trazabilidad del intercambio de datos.</Typography>
                 </Box>
                 {can('integrations', 'create') && <Button variant="contained" startIcon={<Add />} onClick={() => router.push('/integraciones/new')}>Nueva Integración</Button>}

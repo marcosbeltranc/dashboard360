@@ -185,7 +185,7 @@ export default function Administracion() {
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={5}>
                 <Box>
-                    <Typography variant="h4" fontWeight="900" color="#1e293b">
+                    <Typography variant="h4" fontWeight="bold" color="#1e293b">
                         Configuración de Diccionarios
                     </Typography>
                     <Typography color="text.secondary">Gestiona las categorías y listas de valores del sistema</Typography>

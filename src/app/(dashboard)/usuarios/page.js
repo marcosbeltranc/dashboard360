@@ -124,10 +124,33 @@ export default function UsersPage() {
         <Box p={4} className="bg-white p-6 rounded-lg shadow-sm">
 
             {/* HEADER */}
-            <Stack direction="row" justifyContent="space-between" mb={3}>
-                <Typography variant="h5" fontWeight="bold">
-                    Usuarios
-                </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold" color="#1e293b">Usuarios</Typography>
+                    <Typography color="text.secondary">Administración de usuarios y permisos</Typography>
+                </Box>
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            setEditingUser(null);
+                            setForm({ name: '', email: '', password: '', level: activeTab });
+                            setSearch('');
+                            setOpenModal(true);
+                        }}
+                    >
+                        Nuevo Usuario
+                    </Button>
+                </Stack>
+            </Box>
+
+
+            {/* <Stack direction="row" justifyContent="space-between" mb={3}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold" color="#1e293b">Usuarios</Typography>
+                    <Typography color="text.secondary">Administración de usuarios y permisos</Typography>
+                </Box>
+
 
                 <Button
                     variant="contained"
@@ -140,7 +163,7 @@ export default function UsersPage() {
                 >
                     Nuevo Usuario
                 </Button>
-            </Stack>
+            </Stack> */}
 
             {/* TABS */}
             <Tabs
